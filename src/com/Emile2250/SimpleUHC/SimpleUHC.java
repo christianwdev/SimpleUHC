@@ -8,7 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 
-public class Main extends JavaPlugin {
+public class SimpleUHC extends JavaPlugin {
 
     private static File settingsFile;
     private static FileConfiguration settingsConfig;
