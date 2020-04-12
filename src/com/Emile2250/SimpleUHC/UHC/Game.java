@@ -70,18 +70,19 @@ public class Game {
 
         if (players.size() == minPlayers && state == GameState.LOBBY) { // Checks if we are in lobby and we have minimum number of players to start.
             state = GameState.STARTING;
-            scoreboard.sendToPlayers(); // Updates the players as well as game state
             startCountdown(); // Starts the countdown to start the game
         }
+
+        scoreboard.sendToPlayers(); // Updates the players as well as game state
     }
 
     // Removes a player from the current UHCGame
     public void removePlayer(Player player) {
         players.remove(player);
+        scoreboard.sendToPlayers();
 
         if (players.size() == minPlayers - 1 && state == GameState.LOBBY) { // Checks if player count is less than amount needed to start & we are in lobby state.
             if (task != null) { // Makes sure there is an actual task running
-                scoreboard.sendToPlayers(); // Updates the players
                 state = GameState.LOBBY;
                 task.cancel(); // Cancels the countdown
                 return;
@@ -90,7 +91,6 @@ public class Game {
 
         if (numPlayers() == 1 && state == GameState.RUNNING) {
             state = GameState.FINISHED; // Tells us the game is finished
-            scoreboard.sendToPlayers(); // Updates the players and game state
             // TODO WIN GAME
         }
     }
@@ -193,9 +193,11 @@ public class Game {
 
         // For each player it chooses a random location and places them at the highest block.
         ActionBar tpMSG = new ActionBar(ChatColor.GREEN + "Teleporting in 2 seconds"); // Creates a actionbar packet to send to the player.
+
         for (Player player : players) {
-            int x = ThreadLocalRandom.current().nextInt(-borderSize / 2, borderSize / 2); // Grabs a random X value
-            int z = ThreadLocalRandom.current().nextInt(-borderSize / 2, borderSize / 2); // Grabs a random Z value
+            System.out.println(borderSize);
+            int x = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random X value
+            int z = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random Z value
             Location loc = world.getHighestBlockAt(x,z).getLocation(); // Gets the highest block in the world at our random coordinates
             loc.getChunk().load(true); // Tries to load the chunk before hand
 

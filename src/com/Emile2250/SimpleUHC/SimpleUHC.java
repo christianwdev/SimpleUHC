@@ -1,7 +1,11 @@
 package com.Emile2250.SimpleUHC;
 
 import com.Emile2250.SimpleUHC.Commands.PlayerCommands;
+import com.Emile2250.SimpleUHC.Listeners.LeaveEvent;
+import com.Emile2250.SimpleUHC.Listeners.UHCDeath;
+import com.Emile2250.SimpleUHC.Listeners.UHCPvp;
 import com.Emile2250.SimpleUHC.UHC.Game;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -19,9 +23,22 @@ public class SimpleUHC extends JavaPlugin {
     private static SimpleUHC instance;
 
     public void onEnable() {
+
+        // Variable setup
+
         createSettingsConfig();
         games = new ArrayList<>();
+        instance = this;
+
+        // Commands
+
         getCommand("uhc").setExecutor(new PlayerCommands());
+
+        // Events
+
+        Bukkit.getPluginManager().registerEvents(new LeaveEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new UHCDeath(), this);
+        Bukkit.getPluginManager().registerEvents(new UHCPvp(), this);
     }
 
     // Getters
