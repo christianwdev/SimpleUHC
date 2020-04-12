@@ -11,7 +11,7 @@ public class UHCDeath implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent e) {
-        if (e instanceof Player) { // Makes sure it was a player that died
+        if (e.getEntity() instanceof Player) { // Makes sure it was a player that died
             Player player = e.getEntity(); // Creates a variable for future use
 
             for (Game game : SimpleUHC.getGames()) {

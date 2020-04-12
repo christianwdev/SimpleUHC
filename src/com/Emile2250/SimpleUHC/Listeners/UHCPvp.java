@@ -12,7 +12,7 @@ public class UHCPvp implements Listener {
 
     @EventHandler
     public void onHit(EntityDamageByEntityEvent e) {
-        if (e instanceof Player && e.getDamager() instanceof Player) { // Makes sure it was two players attacking one another
+        if (e.getEntity() instanceof Player && e.getDamager() instanceof Player) { // Makes sure it was two players attacking one another
             Player hit = (Player) e.getEntity();
             Player attacker = (Player) e.getDamager();
 

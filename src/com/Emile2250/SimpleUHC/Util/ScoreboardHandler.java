@@ -95,6 +95,7 @@ public class ScoreboardHandler {
         }
     }
 
+    // Sends an updated scoreboard to all players
     public void sendToPlayers() {
         updateBoard();
         for (Player p : game.getPlayers()) {
