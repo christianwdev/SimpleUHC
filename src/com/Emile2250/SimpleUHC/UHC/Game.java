@@ -3,10 +3,8 @@ package com.Emile2250.SimpleUHC.UHC;
 import com.Emile2250.SimpleUHC.SimpleUHC;
 import com.Emile2250.SimpleUHC.Util.ActionBar;
 import com.Emile2250.SimpleUHC.Util.ScoreboardHandler;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldCreator;
+import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -32,6 +30,7 @@ public class Game {
     private BukkitTask task;
     private String gameName;
     private ScoreboardHandler scoreboard;
+    private int countdown;
 
     // Game constructor
     public Game(boolean teamGame) {
@@ -42,6 +41,7 @@ public class Game {
         this.teamGame = teamGame;
         gameName = "UHC-" + SimpleUHC.getGames().size();
         scoreboard = new ScoreboardHandler(this);
+        countdown = 20;
 
         // Tries to load the actual game setting variables, if it errors it will use the defaults which is set in the catch statement.
         try {
@@ -124,19 +124,21 @@ public class Game {
         return gameName;
     }
 
+    public int getCountdown() {
+        return countdown;
+    }
+
     public void startCountdown() {
         // Essentially creates a "loop" that runs every X ticks (in this case 1 second) and runs the run() code
         task = SimpleUHC.getInstance().getServer().getScheduler().runTaskTimer(SimpleUHC.getInstance(), new Runnable() {
 
-            int countdown = 20; // Sets the countdown timer to the duration we input
-
             @Override
             public void run() {
                 countdown--;
+                scoreboard.sendToPlayers();
 
                 if (countdown == 0) {
                     task.cancel(); // Stops running the Bukkit runnable
-                    state = GameState.RUNNING; // Changes game state to running
                     start(); // Starts the game
                     task = null; // Sets task to null
                 }
@@ -148,13 +150,12 @@ public class Game {
         // Essentially creates a "loop" that runs every X ticks (in this case 1 second) and runs the run() code
         task = SimpleUHC.getInstance().getServer().getScheduler().runTaskTimer(SimpleUHC.getInstance(), new Runnable() {
 
-            int countdown = gracePeriod; // Sets the count down to the length of the grace period.
-
             @Override
             public void run() {
-                countdown--; // Removes a second from countdown
+                gracePeriod--; // Removes a second from countdown
+                scoreboard.sendToPlayers();
 
-                if (countdown == 0) { // Checks if countdown is over.
+                if (gracePeriod == 0) { // Checks if countdown is over.
                     task.cancel(); // Stops running the Bukkit runnable
                     world.setPVP(true); // Enables the PVP
                     task = null; // Sets task to null
@@ -195,11 +196,18 @@ public class Game {
         ActionBar tpMSG = new ActionBar(ChatColor.GREEN + "Teleporting in 2 seconds"); // Creates a actionbar packet to send to the player.
 
         for (Player player : players) {
-            System.out.println(borderSize);
-            int x = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random X value
-            int z = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random Z value
-            Location loc = world.getHighestBlockAt(x,z).getLocation(); // Gets the highest block in the world at our random coordinates
+            Location loc;
+
+            // Makes sure the player doesn't spawn in falling sand or an ocean
+            do {
+                int x = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random X value
+                int z = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random Z value
+                loc = world.getHighestBlockAt(x, z).getLocation(); // Gets the highest block in the world at our random coordinates
+            } while (loc.getBlock().getType() == Material.WATER || loc.subtract(0, 1, 0).getBlock().getType() == Material.WATER ||
+                    loc.getBlock().getType() == Material.SAND || loc.subtract(0, 1, 0).getBlock().getType() == Material.SAND);
+
             loc.getChunk().load(true); // Tries to load the chunk before hand
+            final Location tpLoc = loc; // Creates a final variable that we can use inside the runnable
 
             tpMSG.sendToPlayer(player); // Sends a Actionbar packet to the player.
 
@@ -207,10 +215,12 @@ public class Game {
             SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
                 @Override
                 public void run() {
-                    player.teleport(loc);
+                    player.teleport(tpLoc);
                 }
             }, 40L);
         }
+        state = GameState.RUNNING; // Sets game to running as all players have teleported correctly.
         startGracePeriod(); // Starts the grace period
+        scoreboard.sendToPlayers();
     }
 }

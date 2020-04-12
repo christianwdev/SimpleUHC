@@ -10,11 +10,14 @@ public class ScoreboardHandler {
 
     private ScoreboardManager manager;
     private Scoreboard board;
+
     private Objective objective;
-    private Score users;
-    private String previousUser;
-    private Score state;
-    private String previousState;
+
+    private Score scoreOne;
+    private String scoreOnePrevious;
+    private Score scoreTwo;
+    private String scoreTwoPrevious;
+
     private Game game;
 
     public ScoreboardHandler(Game g) {
@@ -28,27 +31,59 @@ public class ScoreboardHandler {
         objective.setDisplaySlot(DisplaySlot.SIDEBAR); // Set the position to be the sidebar
         objective.setDisplayName(ChatColor.GREEN + "" + ChatColor.BOLD + g.getGameName() + " Queue"); // Added the scoreboard header of UHC-? Queue
 
-        state = objective.getScore(g.getState().toString()); // Shows the game state
-        previousState = g.getState().toString();
-        state.setScore(0); // Line numbering
+        scoreTwo = objective.getScore(g.getState().toString()); // Shows the game state
+        scoreTwoPrevious = g.getState().toString();
+        scoreTwo.setScore(0); // Line numbering
 
-        users = objective.getScore("Users: " + g.numPlayers() + "/" + g.getMaxPlayers()); // Displays number of players
-        previousUser = "Users: " + g.numPlayers() + "/" + g.getMaxPlayers();
-        users.setScore(1); // Line numbering
+        scoreOne = objective.getScore("Users: " + g.numPlayers() + "/" + g.getMaxPlayers()); // Displays number of players
+        scoreOnePrevious = "Users: " + g.numPlayers() + "/" + g.getMaxPlayers();
+        scoreOne.setScore(1); // Line numbering
     }
 
     // Updates the number of players as well as the game state
     private void updateBoard() {
-        board.resetScores(previousUser);
-        board.resetScores(previousState);
 
-        state = objective.getScore(game.getState().toString());
-        previousState = game.getState().toString();
-        state.setScore(0);
+        board.resetScores(scoreOnePrevious);
+        board.resetScores(scoreTwoPrevious);
 
-        users = objective.getScore("Users: " + game.numPlayers() + "/" + game.getMaxPlayers());
-        previousUser = "Users: " + game.numPlayers() + "/" + game.getMaxPlayers();
-        users.setScore(1);
+        switch (game.getState()) {
+            case LOBBY:
+
+                scoreTwo = objective.getScore(game.getState().toString());
+                scoreTwoPrevious = game.getState().toString();
+                scoreTwo.setScore(0);
+
+                scoreOne = objective.getScore("Users: " + game.numPlayers() + "/" + game.getMaxPlayers());
+                scoreOnePrevious = "Users: " + game.numPlayers() + "/" + game.getMaxPlayers();
+                scoreOne.setScore(1);
+
+                break;
+            case STARTING:
+
+                scoreOne = objective.getScore("Alive: " + game.numPlayers() + "/" + game.getMaxPlayers());
+                scoreOnePrevious = "Alive: " + game.numPlayers() + "/" + game.getMaxPlayers();
+                scoreOne.setScore(1);
+
+                scoreTwo = objective.getScore("Starting in " + game.getCountdown());
+                scoreTwoPrevious = "Starting in " + game.getCountdown();
+                scoreTwo.setScore(0);
+
+                break;
+            case RUNNING:
+                scoreOne = objective.getScore("Alive: " + game.numPlayers() + "/" + game.getMaxPlayers());
+                scoreOnePrevious = "Alive: " + game.numPlayers() + "/" + game.getMaxPlayers();
+                scoreOne.setScore(1);
+
+                scoreTwo = objective.getScore("Border Size TODO");
+                scoreTwoPrevious = "Border Size TODO";
+                scoreTwo.setScore(0);
+                break;
+            case FINISHED:
+                scoreTwo = objective.getScore("Winner " + game.getPlayers().get(0).getName());
+                scoreTwoPrevious = "Winner " + game.getPlayers().get(0).getName();
+                scoreTwo.setScore(0);
+                break;
+        }
     }
 
     public void sendToPlayers() {

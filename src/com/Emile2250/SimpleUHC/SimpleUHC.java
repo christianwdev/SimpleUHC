@@ -5,7 +5,9 @@ import com.Emile2250.SimpleUHC.Listeners.LeaveEvent;
 import com.Emile2250.SimpleUHC.Listeners.UHCDeath;
 import com.Emile2250.SimpleUHC.Listeners.UHCPvp;
 import com.Emile2250.SimpleUHC.UHC.Game;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class SimpleUHC extends JavaPlugin {
 
@@ -29,6 +32,7 @@ public class SimpleUHC extends JavaPlugin {
         createSettingsConfig();
         games = new ArrayList<>();
         instance = this;
+        deleteWorlds();
 
         // Commands
 
@@ -80,6 +84,21 @@ public class SimpleUHC extends JavaPlugin {
         } catch (IOException | InvalidConfigurationException e) {
             System.out.println("Uh oh! Your configuration loaded incorrectly.");
             e.printStackTrace();
+        }
+    }
+
+    private void deleteWorlds() {
+        String[] directories = this.getServer().getWorldContainer().list();
+
+        for (String folder : directories) {
+            if (folder.contains("UHC-")) {
+                try {
+                    FileUtils.deleteDirectory(new File(this.getServer().getWorldContainer(), folder));
+                } catch (IOException e) {
+                    System.out.println("Oh no! We had an issue deleting left over worlds");
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
