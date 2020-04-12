@@ -1,5 +1,6 @@
 package com.Emile2250.SimpleUHC;
 
+import com.Emile2250.SimpleUHC.Commands.PlayerCommands;
 import com.Emile2250.SimpleUHC.UHC.Game;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -20,7 +21,10 @@ public class SimpleUHC extends JavaPlugin {
     public void onEnable() {
         createSettingsConfig();
         games = new ArrayList<>();
+        getCommand("uhc").setExecutor(new PlayerCommands());
     }
+
+    // Getters
 
     public static FileConfiguration getSettings() {
         return settingsConfig;
@@ -33,6 +37,8 @@ public class SimpleUHC extends JavaPlugin {
     public static SimpleUHC getInstance() {
         return instance;
     }
+
+    // Other stuff?
 
     public static void saveSettings() {
         try {

@@ -1,0 +1,7 @@
+main: com.Emile2250.SimpleUHC.SimpleUHC
+name: SimpleUHC
+version: 1.0
+
+commands:
+  uhc:
+    description: Base command for SimpleUHC

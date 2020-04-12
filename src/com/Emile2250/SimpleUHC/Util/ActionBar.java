@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 
 public class ActionBar {
 
-    private PacketPlayOutChat packet;
+    private PacketPlayOutChat packet; // PIV to send packet to the player
 
     public ActionBar(String msg) {
         this.packet = new PacketPlayOutChat(IChatBaseComponent.ChatSerializer.a("{\"text\":\"" + msg + "\"}"), (byte) 2); // Creates a packet to send to the player.
