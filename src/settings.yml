@@ -5,8 +5,7 @@
 
 max-players: 50
 min-players: 10
-border: 500
+border: 2000 # This would be -1000 to 1000 in X and Z directions
 grace-period: 600
-pvp-period: 1200
 
 Seeds:

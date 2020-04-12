@@ -1,5 +1,6 @@
 package com.Emile2250.SimpleUHC;
 
+import com.Emile2250.SimpleUHC.UHC.Game;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -7,18 +8,30 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class SimpleUHC extends JavaPlugin {
 
     private static File settingsFile;
     private static FileConfiguration settingsConfig;
+    private static ArrayList<Game> games;
+    private static SimpleUHC instance;
 
     public void onEnable() {
         createSettingsConfig();
+        games = new ArrayList<>();
     }
 
     public static FileConfiguration getSettings() {
         return settingsConfig;
+    }
+
+    public static ArrayList<Game> getGames() {
+        return games;
+    }
+
+    public static SimpleUHC getInstance() {
+        return instance;
     }
 
     public static void saveSettings() {
