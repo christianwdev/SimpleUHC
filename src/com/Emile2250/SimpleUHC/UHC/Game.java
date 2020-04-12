@@ -79,20 +79,18 @@ public class Game {
     // Removes a player from the current UHCGame
     public void removePlayer(Player player) {
         players.remove(player);
-        scoreboard.sendToPlayers();
 
         if (players.size() == minPlayers - 1 && state == GameState.LOBBY) { // Checks if player count is less than amount needed to start & we are in lobby state.
             if (task != null) { // Makes sure there is an actual task running
                 state = GameState.LOBBY;
                 task.cancel(); // Cancels the countdown
-                return;
             }
-        }
-
-        if (numPlayers() == 1 && state == GameState.RUNNING) {
+        } else if (numPlayers() == 1 && (state == GameState.GRACE || state == GameState.PVP)) {
             state = GameState.FINISHED; // Tells us the game is finished
             // TODO WIN GAME
         }
+
+        scoreboard.sendToPlayers();
     }
 
     // Gets the number of players in the game
@@ -128,6 +126,10 @@ public class Game {
         return countdown;
     }
 
+    public int getGracePeriod() {
+        return gracePeriod;
+    }
+
     public void startCountdown() {
         // Essentially creates a "loop" that runs every X ticks (in this case 1 second) and runs the run() code
         task = SimpleUHC.getInstance().getServer().getScheduler().runTaskTimer(SimpleUHC.getInstance(), new Runnable() {
@@ -138,7 +140,6 @@ public class Game {
                 scoreboard.sendToPlayers();
 
                 if (countdown == 0) {
-                    task.cancel(); // Stops running the Bukkit runnable
                     start(); // Starts the game
                     task = null; // Sets task to null
                 }
@@ -156,8 +157,8 @@ public class Game {
                 scoreboard.sendToPlayers();
 
                 if (gracePeriod == 0) { // Checks if countdown is over.
-                    task.cancel(); // Stops running the Bukkit runnable
                     world.setPVP(true); // Enables the PVP
+                    state = GameState.PVP;
                     task = null; // Sets task to null
                 }
             }
@@ -215,11 +216,13 @@ public class Game {
             SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
                 @Override
                 public void run() {
+                    player.setHealth(20); // Makes sure they're max health
+                    player.setFoodLevel(20); // Makes sure they're max food
                     player.teleport(tpLoc);
                 }
             }, 40L);
         }
-        state = GameState.RUNNING; // Sets game to running as all players have teleported correctly.
+        state = GameState.GRACE; // Sets game to running as all players have teleported correctly.
         startGracePeriod(); // Starts the grace period
         scoreboard.sendToPlayers();
     }

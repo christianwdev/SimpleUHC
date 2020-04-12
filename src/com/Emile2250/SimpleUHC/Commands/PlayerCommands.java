@@ -18,8 +18,15 @@ public class PlayerCommands implements CommandExecutor {
             if (command.getLabel().equalsIgnoreCase("uhc")) { // Makes sure the label is UHC
                 if (args.length == 1) { // Makes sure that they only typed one argument
                     if (args[0].equalsIgnoreCase("join")) { // Checks if they are trying to queue
-                        for (Game game : SimpleUHC.getGames()) { // Runs through the list of available games
-                            if (game.getState() == GameState.LOBBY && game.numPlayers() < game.getMaxPlayers()) { // Finds the first available game to queue in
+
+                        for (Game game : SimpleUHC.getGames()) {
+                            if (game.getPlayers().contains(player)) { // Makes sure they're not currently in a queue
+                                return false;
+                            }
+                        }
+
+                        for (Game game : SimpleUHC.getGames()) { // Runs through the list of available game
+                            if ((game.getState() == GameState.LOBBY || game.getState() == GameState.STARTING) && game.numPlayers() < game.getMaxPlayers()) { // Finds the first available game to queue in
                                 game.addPlayer(player); // Adds player to the game to queue in
                                 return false; // Stops the method call as we did what we needed.
                             }

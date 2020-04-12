@@ -69,13 +69,22 @@ public class ScoreboardHandler {
                 scoreTwo.setScore(0);
 
                 break;
-            case RUNNING:
+            case GRACE:
                 scoreOne = objective.getScore("Alive: " + game.numPlayers() + "/" + game.getMaxPlayers());
                 scoreOnePrevious = "Alive: " + game.numPlayers() + "/" + game.getMaxPlayers();
                 scoreOne.setScore(1);
 
-                scoreTwo = objective.getScore("Border Size TODO");
-                scoreTwoPrevious = "Border Size TODO";
+                scoreTwo = objective.getScore("Grace Period : " + game.getGracePeriod());
+                scoreTwoPrevious = "Grace Period : " + game.getGracePeriod();
+                scoreTwo.setScore(0);
+                break;
+            case PVP:
+                scoreOne = objective.getScore("Alive: " + game.numPlayers() + "/" + game.getMaxPlayers());
+                scoreOnePrevious = "Alive: " + game.numPlayers() + "/" + game.getMaxPlayers();
+                scoreOne.setScore(1);
+
+                scoreTwo = objective.getScore("Border : TODO");
+                scoreTwoPrevious = "Border : TODO";
                 scoreTwo.setScore(0);
                 break;
             case FINISHED:
