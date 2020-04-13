@@ -1,5 +1,7 @@
 package com.Emile2250.SimpleUHC;
 
+import com.Emile2250.SimpleUHC.Commands.AdminCommands;
+import com.Emile2250.SimpleUHC.Commands.CommandHandler;
 import com.Emile2250.SimpleUHC.Commands.PlayerCommands;
 import com.Emile2250.SimpleUHC.Listeners.LeaveEvent;
 import com.Emile2250.SimpleUHC.Listeners.UHCDeath;
@@ -36,7 +38,7 @@ public class SimpleUHC extends JavaPlugin {
 
         // Commands
 
-        getCommand("uhc").setExecutor(new PlayerCommands());
+        getCommand("uhc").setExecutor(new CommandHandler()); // Hub to navigate sub commands to appropriate class
 
         // Events
 

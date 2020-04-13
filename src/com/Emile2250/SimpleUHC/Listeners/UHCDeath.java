@@ -11,12 +11,13 @@ public class UHCDeath implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent e) {
-        if (e.getEntity() instanceof Player) { // Makes sure it was a player that died
+        if (e.getEntity() != null) { // Makes sure it was a player that died
             Player player = e.getEntity(); // Creates a variable for future use
 
             for (Game game : SimpleUHC.getGames()) {
                 if (game.getPlayers().contains(player)) { // Checks if the player died within a UHC game
                     game.removePlayer(player); // Removes the player from the game.
+                    player.spigot().respawn();
                     return; // Since we handled the death there is no need to continue the code
                 }
             }

@@ -3,12 +3,16 @@ package com.Emile2250.SimpleUHC.UHC;
 import com.Emile2250.SimpleUHC.SimpleUHC;
 import com.Emile2250.SimpleUHC.Util.ActionBar;
 import com.Emile2250.SimpleUHC.Util.ScoreboardHandler;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.*;
+import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -80,14 +84,22 @@ public class Game {
     public void removePlayer(Player player) {
         players.remove(player);
 
-        if (players.size() == minPlayers - 1 && state == GameState.LOBBY) { // Checks if player count is less than amount needed to start & we are in lobby state.
+        if (players.size() == minPlayers - 1 && state == GameState.STARTING) { // Checks if player count is less than amount needed to start & we are in lobby state.
             if (task != null) { // Makes sure there is an actual task running
                 state = GameState.LOBBY;
+                countdown = 20;
                 task.cancel(); // Cancels the countdown
+                task = null;
             }
         } else if (numPlayers() == 1 && (state == GameState.GRACE || state == GameState.PVP)) {
+            if (task != null) {
+                task.cancel();
+                task = null;
+            }
+
             state = GameState.FINISHED; // Tells us the game is finished
-            // TODO WIN GAME
+            stop();
+            SimpleUHC.getGames().remove(this);
         }
 
         scoreboard.sendToPlayers();
@@ -130,6 +142,20 @@ public class Game {
         return gracePeriod;
     }
 
+    public int getBorderSize() {
+        return borderSize;
+    }
+
+    public void forceStart() {
+        if (task != null) {
+            task.cancel();
+        }
+
+        countdown = 0;
+        scoreboard.sendToPlayers();
+        start();
+    }
+
     public void startCountdown() {
         // Essentially creates a "loop" that runs every X ticks (in this case 1 second) and runs the run() code
         task = SimpleUHC.getInstance().getServer().getScheduler().runTaskTimer(SimpleUHC.getInstance(), new Runnable() {
@@ -140,8 +166,9 @@ public class Game {
                 scoreboard.sendToPlayers();
 
                 if (countdown == 0) {
-                    start(); // Starts the game
+                    task.cancel(); // Cancels loop
                     task = null; // Sets task to null
+                    start(); // Starts the game
                 }
             }
         }, 0L, 20L);
@@ -157,9 +184,29 @@ public class Game {
                 scoreboard.sendToPlayers();
 
                 if (gracePeriod == 0) { // Checks if countdown is over.
-                    world.setPVP(true); // Enables the PVP
-                    state = GameState.PVP;
+                    task.cancel(); // Cancels loop
                     task = null; // Sets task to null
+                    world.setPVP(true); // Enables the PVP
+                    state = GameState.PVP; // Changes game state
+                    startPvpPeriod(); // Starts PVP period
+                }
+            }
+        }, 0L, 20L);
+    }
+
+    public void startPvpPeriod() {
+        // Essentially creates a "loop" that runs every X ticks (in this case 1 second) and runs the run() code
+        task = SimpleUHC.getInstance().getServer().getScheduler().runTaskTimer(SimpleUHC.getInstance(), new Runnable() {
+
+            @Override
+            public void run() {
+                if (borderSize > 50) {
+                    borderSize--;
+                    world.getWorldBorder().setSize(borderSize);
+                    scoreboard.sendToPlayers();
+                } else {
+                    task.cancel();
+                    task = null;
                 }
             }
         }, 0L, 20L);
@@ -191,21 +238,26 @@ public class Game {
 
         world = creator.createWorld(); // Actually creates the world with the values we set and sets it to the Game world.
         world.getWorldBorder().setSize(borderSize); // Sets world border of desired size
+        world.getWorldBorder().setDamageAmount(4);
         world.setPVP(false); // Disables PVP for the world
+        world.setAutoSave(false);
+        world.setKeepSpawnInMemory(false);
 
         // For each player it chooses a random location and places them at the highest block.
         ActionBar tpMSG = new ActionBar(ChatColor.GREEN + "Teleporting in 2 seconds"); // Creates a actionbar packet to send to the player.
 
         for (Player player : players) {
             Location loc;
+            Biome biome;
 
             // Makes sure the player doesn't spawn in falling sand or an ocean
             do {
                 int x = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random X value
                 int z = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random Z value
-                loc = world.getHighestBlockAt(x, z).getLocation(); // Gets the highest block in the world at our random coordinates
-            } while (loc.getBlock().getType() == Material.WATER || loc.subtract(0, 1, 0).getBlock().getType() == Material.WATER ||
-                    loc.getBlock().getType() == Material.SAND || loc.subtract(0, 1, 0).getBlock().getType() == Material.SAND);
+                loc = getActualHighestBlock(world, x, z); // Gets actual highest block (hopefully)
+                biome = world.getBiome(loc.getBlockX(), loc.getBlockZ()); // Makes sure they dont spawn in a water biome such as an ocean
+            } while (loc.subtract(0, 3, 0).getBlock().getType() == Material.WATER ||
+                    biome == Biome.OCEAN || biome == Biome.DEEP_OCEAN || biome == Biome.RIVER);
 
             loc.getChunk().load(true); // Tries to load the chunk before hand
             final Location tpLoc = loc; // Creates a final variable that we can use inside the runnable
@@ -219,11 +271,55 @@ public class Game {
                     player.setHealth(20); // Makes sure they're max health
                     player.setFoodLevel(20); // Makes sure they're max food
                     player.teleport(tpLoc);
+
+                    if (state != GameState.GRACE) { // Starts grace period whenever the first player teleports
+                        state = GameState.GRACE; // Sets game to running as all players have teleported correctly.
+                        scoreboard.sendToPlayers(); // Updates the scoreboard for all the players
+                        startGracePeriod(); // Starts the grace period
+                    }
                 }
             }, 40L);
         }
-        state = GameState.GRACE; // Sets game to running as all players have teleported correctly.
-        startGracePeriod(); // Starts the grace period
-        scoreboard.sendToPlayers();
+    }
+
+    public void stop() {
+
+        ActionBar tpMSG = new ActionBar(ChatColor.GREEN + "Teleporting back to main world in 10 seconds"); // Creates a actionbar packet to send to the player.
+        for (Player p : world.getPlayers()) {
+            tpMSG.sendToPlayer(p);
+        }
+
+        SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
+            @Override
+            public void run() {
+                players.clear();
+                World mainWorld = Bukkit.getWorld("world");
+
+                if (SimpleUHC.getSettings().isString("main-world") && Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")) != null)
+                    world = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world"));
+
+                for (Player p : world.getPlayers()) {
+                    p.teleport(mainWorld.getSpawnLocation());
+                }
+
+                try {
+                    Bukkit.unloadWorld(world, false);
+                    FileUtils.deleteDirectory(new File(SimpleUHC.getInstance().getServer().getWorldContainer(), gameName));
+                } catch (IOException e) {
+                    System.out.println("Oh no! We had an issue deleting left over worlds");
+                    e.printStackTrace();
+                }
+            }
+        }, 200L);
+    }
+
+    private Location getActualHighestBlock(World world, int x, int z) {
+        Location loc = world.getHighestBlockAt(x, z).getLocation();
+        for (int y = world.getSeaLevel(); y < 255; y++) {
+            if (world.getBlockAt(x, y, z).getType() == Material.AIR) { // Makes sure they're above sea level (not in a cave) and that they are on a solid block
+                return new Location(world, x, y, z);
+            }
+        }
+        return loc;
     }
 }

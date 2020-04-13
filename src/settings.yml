@@ -7,5 +7,6 @@ max-players: 50
 min-players: 10
 border-size: 2000 # This would be -1000 to 1000 in X and Z directions
 grace-period: 600
+main-world: world # World they teleport back after a match
 
 Seeds:
