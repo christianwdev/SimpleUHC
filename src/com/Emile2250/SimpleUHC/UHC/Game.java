@@ -8,6 +8,7 @@ import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
@@ -23,6 +24,8 @@ public class Game {
     private int minPlayers;
     private int borderSize;
     private int gracePeriod; // In Seconds
+    private boolean hasNights;
+    private boolean naturalHealing;
 
     // Game Variables
     private ArrayList<Player> players;
@@ -53,6 +56,8 @@ public class Game {
             minPlayers = settings.getInt("min-players");
             borderSize = settings.getInt("border-size");
             gracePeriod = settings.getInt("grace-period");
+            naturalHealing = settings.getBoolean("natural-healing");
+            hasNights = settings.getBoolean("has-nights");
 
         } catch (Exception e) {
 
@@ -61,6 +66,8 @@ public class Game {
             minPlayers = 10;
             borderSize = 2000;
             gracePeriod = 600;
+            hasNights = true;
+            naturalHealing = true;
 
             System.out.println("Uh oh! You had an error with your settings configuration.");
             e.printStackTrace();
@@ -82,6 +89,7 @@ public class Game {
     // Removes a player from the current UHCGame
     public void removePlayer(Player player) {
         players.remove(player);
+        scoreboard.wipeScoreboard(player);
 
         if (players.size() == minPlayers - 1 && state == GameState.STARTING) { // Checks if player count is less than amount needed to start & we are in lobby state.
             if (task != null) { // Makes sure there is an actual task running
@@ -242,8 +250,8 @@ public class Game {
         world.getWorldBorder().setSize(borderSize); // Sets world border of desired size
         world.getWorldBorder().setDamageAmount(4);
         world.setPVP(false); // Disables PVP for the world
-        world.setAutoSave(false);
-        world.setKeepSpawnInMemory(false);
+        world.setGameRuleValue("doDaylightCycle", String.valueOf(hasNights));
+        world.setGameRuleValue("naturalRegeneration", String.valueOf(naturalHealing));
 
         // For each player it chooses a random location and places them at the highest block.
         ActionBar tpMSG = new ActionBar(ChatColor.GREEN + "Teleporting in 2 seconds"); // Creates a actionbar packet to send to the player.
@@ -258,7 +266,7 @@ public class Game {
                 int z = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random Z value
                 loc = getActualHighestBlock(world, x, z); // Gets actual highest block (hopefully)
                 biome = world.getBiome(loc.getBlockX(), loc.getBlockZ()); // Makes sure they dont spawn in a water biome such as an ocean
-            } while (loc.subtract(0, 3, 0).getBlock().getType() == Material.WATER ||
+            } while (loc.subtract(0, 2, 0).getBlock().getType() == Material.WATER ||
                     biome == Biome.OCEAN || biome == Biome.DEEP_OCEAN || biome == Biome.RIVER || biome == Biome.BEACH || biome == Biome.COLD_BEACH || biome == Biome.STONE_BEACH);
 
             loc.getChunk().load(true); // Tries to load the chunk before hand
@@ -272,6 +280,12 @@ public class Game {
                 public void run() {
                     player.setHealth(20); // Makes sure they're max health
                     player.setFoodLevel(20); // Makes sure they're max food
+                    player.setSaturation(20);
+
+                    player.getInventory().clear(); // Clears inventory
+                    player.getInventory().setArmorContents(null); // Clears armor
+                    player.updateInventory(); // Updates inventory for the player based off our changes
+
                     player.teleport(tpLoc);
 
                     if (state != GameState.GRACE) { // Starts grace period whenever the first player teleports
@@ -294,6 +308,7 @@ public class Game {
         SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
             @Override
             public void run() {
+                scoreboard.wipeAll();
                 players.clear(); // Removes all players from the game before deleting to allow for garbage collection
                 World mainWorld = Bukkit.getWorld("world"); // Default main world
 
@@ -301,6 +316,9 @@ public class Game {
                     world = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")); // Sets it to preferred main world if it is in the config and is a world
 
                 for (Player p : world.getPlayers()) {
+                    p.getInventory().clear(); // Clears inventory
+                    p.getInventory().setArmorContents(null); // Clears armor
+                    p.updateInventory(); // Updates inventory for the player based off our changes
                     p.teleport(mainWorld.getSpawnLocation()); // Teleports any existing players to the main world to prepare for world deletion
                 }
 
@@ -317,8 +335,8 @@ public class Game {
 
     private Location getActualHighestBlock(World world, int x, int z) {
         Location loc = world.getHighestBlockAt(x, z).getLocation();
-        for (int y = world.getSeaLevel(); y < 255; y++) {
-            if (world.getBlockAt(x, y, z).getType() == Material.AIR) { // Makes sure they're above sea level (not in a cave) and that they are on a solid block
+        for (int y = 255; y > 0; y--) {
+            if (world.getBlockAt(x, y, z).getType() != Material.AIR) { // Makes sure they're above sea level (not in a cave) and that they are on a solid block
                 return new Location(world, x, y + 2, z); // Returns location two blocks above just in case.
             }
         }

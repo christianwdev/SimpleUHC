@@ -105,4 +105,14 @@ public class ScoreboardHandler {
             p.setScoreboard(board);
         }
     }
+
+    public void wipeScoreboard(Player p) {
+        p.setScoreboard(manager.getNewScoreboard());
+    }
+
+    public void wipeAll() {
+        for (Player p : game.getPlayers()) {
+            p.setScoreboard(manager.getNewScoreboard());
+        }
+    }
 }

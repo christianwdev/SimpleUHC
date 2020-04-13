@@ -1,9 +1,7 @@
 package com.Emile2250.SimpleUHC;
 
 import com.Emile2250.SimpleUHC.Commands.CommandHandler;
-import com.Emile2250.SimpleUHC.Listeners.LeaveEvent;
-import com.Emile2250.SimpleUHC.Listeners.UHCDeath;
-import com.Emile2250.SimpleUHC.Listeners.UHCPvp;
+import com.Emile2250.SimpleUHC.Listeners.*;
 import com.Emile2250.SimpleUHC.UHC.Game;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
@@ -41,6 +39,8 @@ public class SimpleUHC extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new LeaveEvent(), this);
         Bukkit.getPluginManager().registerEvents(new UHCDeath(), this);
         Bukkit.getPluginManager().registerEvents(new UHCPvp(), this);
+        Bukkit.getPluginManager().registerEvents(new WorldCreation(), this);
+        Bukkit.getPluginManager().registerEvents(new JoinEvent(), this);
     }
 
     // Getters

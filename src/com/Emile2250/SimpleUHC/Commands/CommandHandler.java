@@ -12,6 +12,7 @@ public class CommandHandler implements CommandExecutor {
         if (args.length == 1) {
             switch(args[0]) {
                 case "join":
+                case "quit":
                     return PlayerCommands.onCommand(sender, args);
                 case "start":
                     return AdminCommands.onCommand(sender, args);
