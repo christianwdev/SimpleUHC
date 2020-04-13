@@ -248,7 +248,8 @@ public class Game {
 
         world = creator.createWorld(); // Actually creates the world with the values we set and sets it to the Game world.
         world.getWorldBorder().setSize(borderSize); // Sets world border of desired size
-        world.getWorldBorder().setDamageAmount(4);
+        world.getWorldBorder().setDamageAmount(2);
+        world.getWorldBorder().setDamageBuffer(1);
         world.setPVP(false); // Disables PVP for the world
         world.setGameRuleValue("doDaylightCycle", String.valueOf(hasNights));
         world.setGameRuleValue("naturalRegeneration", String.valueOf(naturalHealing));
