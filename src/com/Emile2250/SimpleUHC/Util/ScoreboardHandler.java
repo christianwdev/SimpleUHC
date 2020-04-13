@@ -43,7 +43,8 @@ public class ScoreboardHandler {
     // Updates the number of players as well as the game state
     private void updateBoard() {
 
-        // These lines will never changed
+        // These lines will never changed, they are blank lines.
+        // The reason they all have different length of spaces is due to each line needs to be unique
 
         lines.get(6).update(" ");
         lines.get(3).update("  ");

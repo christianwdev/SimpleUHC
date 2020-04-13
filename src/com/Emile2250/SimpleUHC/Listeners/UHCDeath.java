@@ -17,7 +17,7 @@ public class UHCDeath implements Listener {
             for (Game game : SimpleUHC.getGames()) {
                 if (game.getPlayers().contains(player)) { // Checks if the player died within a UHC game
                     game.removePlayer(player); // Removes the player from the game.
-                    player.spigot().respawn();
+                    player.spigot().respawn(); // Force respawns to allow for world deletion if needed
                     return; // Since we handled the death there is no need to continue the code
                 }
             }

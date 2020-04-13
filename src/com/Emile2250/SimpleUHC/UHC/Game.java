@@ -6,7 +6,6 @@ import com.Emile2250.SimpleUHC.Util.ScoreboardHandler;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
-import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -98,14 +97,15 @@ public class Game {
             }
 
             state = GameState.FINISHED; // Tells us the game is finished
-            stop();
-            SimpleUHC.getGames().remove(this);
+            stop(); // Finishes game by deleting world and teleporting everyone out
+            SimpleUHC.getGames().remove(this); // Removes game from list to be garbage collected
         }
 
         scoreboard.sendToPlayers();
     }
 
-    // Gets the number of players in the game
+    // GETTERS
+
     public int numPlayers() {
         return players.size();
     }
@@ -146,6 +146,8 @@ public class Game {
         return borderSize;
     }
 
+    // Allows for force start with admins
+
     public void forceStart() {
         if (task != null) {
             task.cancel();
@@ -163,7 +165,7 @@ public class Game {
             @Override
             public void run() {
                 countdown--;
-                scoreboard.sendToPlayers();
+                scoreboard.sendToPlayers(); // Updates everyones scoreboard
 
                 if (countdown == 0) {
                     task.cancel(); // Cancels loop
@@ -181,7 +183,7 @@ public class Game {
             @Override
             public void run() {
                 gracePeriod--; // Removes a second from countdown
-                scoreboard.sendToPlayers();
+                scoreboard.sendToPlayers(); // Updates everyones scoreboard
 
                 if (gracePeriod == 0) { // Checks if countdown is over.
                     task.cancel(); // Cancels loop
@@ -200,13 +202,13 @@ public class Game {
 
             @Override
             public void run() {
-                if (borderSize > 50) {
-                    borderSize--;
-                    world.getWorldBorder().setSize(borderSize);
-                    scoreboard.sendToPlayers();
+                if (borderSize > 50) { // Changes the world border until there's a radius of 50
+                    borderSize--; // Decrements world border radius
+                    world.getWorldBorder().setSize(borderSize); // Updates world border
+                    scoreboard.sendToPlayers(); // Updates scoreboard
                 } else {
-                    task.cancel();
-                    task = null;
+                    task.cancel(); // Stops running loop if radius is 25 blocks
+                    task = null; // Sets tasks to null
                 }
             }
         }, 0L, 20L);
@@ -216,8 +218,8 @@ public class Game {
         FileConfiguration settings = SimpleUHC.getSettings(); // Gets updated configuration
 
         // Sets the world creation values
-        WorldCreator creator = new WorldCreator(gameName);
-        creator.generateStructures(false);
+        WorldCreator creator = new WorldCreator(gameName); // Creates a world with the game name
+        creator.generateStructures(false); // Disables villages, dungeons, etc.
 
         // If they have a list of strings in the configuration it will choose a random one, if not it will default to a random Minecraft seed.
         if (settings.isList("Seeds")) { // Makes sure its a list
@@ -257,7 +259,7 @@ public class Game {
                 loc = getActualHighestBlock(world, x, z); // Gets actual highest block (hopefully)
                 biome = world.getBiome(loc.getBlockX(), loc.getBlockZ()); // Makes sure they dont spawn in a water biome such as an ocean
             } while (loc.subtract(0, 3, 0).getBlock().getType() == Material.WATER ||
-                    biome == Biome.OCEAN || biome == Biome.DEEP_OCEAN || biome == Biome.RIVER);
+                    biome == Biome.OCEAN || biome == Biome.DEEP_OCEAN || biome == Biome.RIVER || biome == Biome.BEACH || biome == Biome.COLD_BEACH || biome == Biome.STONE_BEACH);
 
             loc.getChunk().load(true); // Tries to load the chunk before hand
             final Location tpLoc = loc; // Creates a final variable that we can use inside the runnable
@@ -292,19 +294,19 @@ public class Game {
         SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
             @Override
             public void run() {
-                players.clear();
-                World mainWorld = Bukkit.getWorld("world");
+                players.clear(); // Removes all players from the game before deleting to allow for garbage collection
+                World mainWorld = Bukkit.getWorld("world"); // Default main world
 
                 if (SimpleUHC.getSettings().isString("main-world") && Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")) != null)
-                    world = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world"));
+                    world = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")); // Sets it to preferred main world if it is in the config and is a world
 
                 for (Player p : world.getPlayers()) {
-                    p.teleport(mainWorld.getSpawnLocation());
+                    p.teleport(mainWorld.getSpawnLocation()); // Teleports any existing players to the main world to prepare for world deletion
                 }
 
                 try {
-                    Bukkit.unloadWorld(world, false);
-                    FileUtils.deleteDirectory(new File(SimpleUHC.getInstance().getServer().getWorldContainer(), gameName));
+                    Bukkit.unloadWorld(world, false); // Unloads world to prepare to delete
+                    FileUtils.deleteDirectory(new File(SimpleUHC.getInstance().getServer().getWorldContainer(), gameName)); // Deletes the world
                 } catch (IOException e) {
                     System.out.println("Oh no! We had an issue deleting left over worlds");
                     e.printStackTrace();
@@ -317,7 +319,7 @@ public class Game {
         Location loc = world.getHighestBlockAt(x, z).getLocation();
         for (int y = world.getSeaLevel(); y < 255; y++) {
             if (world.getBlockAt(x, y, z).getType() == Material.AIR) { // Makes sure they're above sea level (not in a cave) and that they are on a solid block
-                return new Location(world, x, y, z);
+                return new Location(world, x, y + 2, z); // Returns location two blocks above just in case.
             }
         }
         return loc;

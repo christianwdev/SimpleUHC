@@ -14,11 +14,11 @@ public class AdminCommands {
         if (sender instanceof Player) { // Makes sure it was a player instead of the console.
             Player player = (Player) sender; // Sets a variable for future use
             if (args[0].equalsIgnoreCase("start")) { // Checks if they are trying to queue
-                if (player.hasPermission("uhc.forcestart")) {
+                if (player.hasPermission("uhc.forcestart")) { // Checks for permission to start.
                     for (Game game : SimpleUHC.getGames()) { // Runs through the list of available game
-                        if (game.getPlayers().contains(player)) {
-                            if (game.getState() == GameState.LOBBY || game.getState() == GameState.STARTING) {
-                                game.forceStart();
+                        if (game.getPlayers().contains(player)) { // Makes sure they're in a game
+                            if (game.getState() == GameState.LOBBY || game.getState() == GameState.STARTING) { // Makes sure they're not already in a running game
+                                game.forceStart(); // Force starts the game
                                 return false; // Stops the method call as we did what we needed.
                             } else {
                                 return false;

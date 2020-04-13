@@ -23,12 +23,12 @@ public class ScoreboardLine {
     }
 
     public void update(String text) {
-        board.resetScores(previous);
+        board.resetScores(previous); // Removes the previous line from scoreboard
 
-        score = obj.getScore(ChatColor.translateAlternateColorCodes('&', text));
-        score.setScore(line);
+        score = obj.getScore(ChatColor.translateAlternateColorCodes('&', text)); // Creates new updated scoreboard line
+        score.setScore(line); // Sets it to the appropriate score (line)
 
-        previous = ChatColor.translateAlternateColorCodes('&', text);
+        previous = ChatColor.translateAlternateColorCodes('&', text); // Updates the previous text so we can reset it next update
     }
 
 }
