@@ -4,7 +4,6 @@ import com.Emile2250.SimpleUHC.SimpleUHC;
 import com.Emile2250.SimpleUHC.UHC.Game;
 import com.Emile2250.SimpleUHC.UHC.GameState;
 import com.Emile2250.SimpleUHC.Util.ChatUtil;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -15,7 +14,6 @@ public class PlayerCommands {
         if (sender instanceof Player) { // Makes sure it was a player instead of the console.
             Player player = (Player) sender; // Sets a variable for future use
             if (args[0].equalsIgnoreCase("join")) { // Checks if they are trying to queue
-
                 for (Game game : SimpleUHC.getGames()) {
                     if (game.getPlayers().contains(player)) { // Makes sure they're not currently in a queue
                         ChatUtil.sendMessage(player, " &a&lUHC > &7You're already in &b" + game.getGameName());
@@ -23,8 +21,12 @@ public class PlayerCommands {
                     }
                 }
 
+                boolean teamGame = false;
+
+                teamGame = (args.length == 2 && args[1].equalsIgnoreCase("team"));
+
                 for (Game game : SimpleUHC.getGames()) { // Runs through the list of available game
-                    if ((game.getState() == GameState.LOBBY || game.getState() == GameState.STARTING) && game.numPlayers() < game.getMaxPlayers()) { // Finds the first available game to queue in
+                    if ((game.getState() == GameState.LOBBY || game.getState() == GameState.STARTING) && game.numPlayers() < game.getMaxPlayers() && game.isTeamGame() == teamGame) { // Finds the first available game to queue in
                         game.addPlayer(player); // Adds player to the game to queue in
                         ChatUtil.sendMessage(player, " &a&lUHC > &7You successfully joined &b" + game.getGameName());
                         return false; // Stops the method call as we did what we needed.
@@ -32,10 +34,7 @@ public class PlayerCommands {
                 }
 
                 // If they get to this point there are NO available games to join so we will create a new game
-                Game game = new Game(false); // TODO add team implementation
-                game.addPlayer(player); // Adds the player to the game
-                SimpleUHC.getGames().add(game); // Adds the game to the game list
-                ChatUtil.sendMessage(player, " &a&lUHC > &7You successfully joined &b" + game.getGameName());
+                ChatUtil.sendMessage(player, " &a&lUHC > &7There are no games available to join at this time, please wait.");
 
             } else if (args[0].equalsIgnoreCase("quit")) {
                 for (Game game : SimpleUHC.getGames()) {

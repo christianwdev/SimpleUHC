@@ -8,8 +8,17 @@ public class UHCTeam {
 
     private ArrayList<Player> members;
 
-    public UHCTeam() {
-        // TODO add team implementation
+    public UHCTeam(Player p) {
+        members = new ArrayList<>();
+        members.add(p);
+    }
+
+    public void addMember(Player p) {
+        members.add(p);
+    }
+
+    public void removeMember(Player p) {
+        members.remove(p);
     }
 
     public ArrayList<Player> getMembers() {

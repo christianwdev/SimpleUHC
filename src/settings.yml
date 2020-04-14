@@ -1,14 +1,44 @@
+main-world: world # World they teleport back after a match
+
+Games:
+  UHC-0:
+    max-players: 50
+    min-players: 10
+    border-size: 2000
+    grace-period: 600
+    has-nights: false
+    natural-healing: false
+    team-game: false
+  UHC-1:
+    max-players: 50
+    min-players: 10
+    border-size: 2000
+    grace-period: 600
+    has-nights: false
+    natural-healing: false
+    team-game: false
+  UHC-2:
+    max-players: 50
+    min-players: 10
+    border-size: 2000
+    grace-period: 600
+    has-nights: false
+    natural-healing: false
+    team-game: true
+    team-size: 2
+  UHC-3:
+    max-players: 50
+    min-players: 10
+    border-size: 2000
+    grace-period: 600
+    has-nights: false
+    natural-healing: false
+    team-game: true
+    team-size: 2
+
 ### EXAMPLE ###
 # Seeds:
 #   - 1956812775
 #   - 6871237873
-
-max-players: 50
-min-players: 10
-border-size: 2000 # This would be -1000 to 1000 in X and Z directions
-grace-period: 600
-main-world: "world" # World they teleport back after a match
-has-nights: false
-natural-healing: false
 
 Seeds:

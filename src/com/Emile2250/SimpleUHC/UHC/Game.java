@@ -8,9 +8,8 @@ import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.scoreboard.Scoreboard;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +25,7 @@ public class Game {
     private int minPlayers;
     private int borderSize;
     private int gracePeriod; // In Seconds
+    private int teamSize;
     private boolean hasNights;
     private boolean naturalHealing;
 
@@ -42,13 +42,13 @@ public class Game {
     private int countdown;
 
     // Game constructor
-    public Game(boolean teamGame) {
+    public Game(String name) {
         FileConfiguration settings = SimpleUHC.getSettings();
 
         players = new ArrayList<>();
         state = GameState.LOBBY;
-        this.teamGame = teamGame;
-        gameName = "UHC-" + SimpleUHC.getGames().size();
+        gameName = name;
+        teams = new ArrayList<>();
         scoreboards = new ArrayList<>();
         kills = new HashMap<>();
         countdown = 20;
@@ -56,12 +56,18 @@ public class Game {
         // Tries to load the actual game setting variables, if it errors it will use the defaults which is set in the catch statement.
         try {
 
-            maxPlayers = settings.getInt("max-players");
-            minPlayers = settings.getInt("min-players");
-            borderSize = settings.getInt("border-size");
-            gracePeriod = settings.getInt("grace-period");
-            naturalHealing = settings.getBoolean("natural-healing");
-            hasNights = settings.getBoolean("has-nights");
+            maxPlayers = settings.getInt("Games." + name + ".max-players");
+            minPlayers = settings.getInt("Games." + name + ".min-players");
+            borderSize = settings.getInt("Games." + name + ".border-size");
+            gracePeriod = settings.getInt("Games." + name + ".grace-period");
+            naturalHealing = settings.getBoolean("Games." + name + ".natural-healing");
+            hasNights = settings.getBoolean("Games." + name + ".has-nights");
+            teamGame = settings.getBoolean("Games." + name + ".team-game");
+
+            if (teamGame)
+                teamSize = settings.getInt("Games." + name + ".team-size");
+            else
+                teamSize = 0;
 
         } catch (Exception e) {
 
@@ -72,18 +78,34 @@ public class Game {
             gracePeriod = 600;
             hasNights = true;
             naturalHealing = true;
+            teamGame = false;
+            teamSize = 0;
 
-            System.out.println("Uh oh! You had an error with your settings configuration.");
+            System.out.println("Uh oh! You had an error with your settings configuration for " + gameName);
             e.printStackTrace();
         }
     }
 
     // Adds a player to the UHC Game
     public void addPlayer(Player player) {
-        players.add(player);
-        kills.put(player, 0);
+        players.add(player); // Adds player to the game
+        kills.put(player, 0); // Sets player kills to 0
+
+        if (teamGame) {
+            UHCTeam team = getAvailableTeam(); // Tries to find first available team
+            if (team != null) {
+                team.addMember(player); // Adds player to available team
+            } else {
+                team = new UHCTeam(player); // If there is no team to join it will create a new one
+                teams.add(team); // Adds the team to the teams arraylist
+            }
+        }
 
         if (players.size() == minPlayers && state == GameState.LOBBY) { // Checks if we are in lobby and we have minimum number of players to start.
+            if (teamGame) // Checks if it's a team game
+                if (teams.size() < 2) // Makes sure there's at least two teams
+                    return;
+
             state = GameState.STARTING;
             startCountdown(); // Starts the countdown to start the game
         }
@@ -93,9 +115,18 @@ public class Game {
 
     // Removes a player from the current UHCGame
     public void removePlayer(Player player) {
-        players.remove(player);
-        removeBoard(player);
-        kills.remove(player);
+        players.remove(player); // Removes player from the game
+        removeBoard(player); // Removes scoreboard from player
+        kills.remove(player); // Removes player from kill hashmap
+
+        if (teamGame) {
+            UHCTeam team = getTeam(player); // Gets the players team
+            if (team != null) { // Makes sure its not null for some reason
+                team.removeMember(player); // Removes the player
+                if (team.getMembers().size() == 0) // Checks if the team is all dead
+                    teams.remove(team); // Removes team from the game
+            }
+        }
 
         if (players.size() == minPlayers - 1 && state == GameState.STARTING) { // Checks if player count is less than amount needed to start & we are in lobby state.
             if (task != null) { // Makes sure there is an actual task running
@@ -104,7 +135,7 @@ public class Game {
                 task.cancel(); // Cancels the countdown
                 task = null;
             }
-        } else if (numPlayers() == 1 && (state == GameState.GRACE || state == GameState.PVP)) {
+        } else if ((numPlayers() == 1 || teams.size() == 1) && (state == GameState.GRACE || state == GameState.PVP)) {
             if (task != null) {
                 task.cancel();
                 task = null;
@@ -141,6 +172,26 @@ public class Game {
     private void removeBoard(Player p) {
         scoreboards.remove(getBoard(p));
         p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+    }
+
+    public UHCTeam getTeam(Player p) {
+        for (UHCTeam t : teams) {
+            if (t.getMembers().contains(p)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    // Finds the first available team, if there is none it returns null
+    private UHCTeam getAvailableTeam() {
+        for (UHCTeam t : teams) {
+            if (t.getMembers().size() < teamSize) {
+                return t;
+            }
+        }
+
+        return null;
     }
 
     // Adds one kill
@@ -196,7 +247,6 @@ public class Game {
     }
 
     // Allows for force start with admins
-
     public void forceStart() {
         if (task != null) {
             task.cancel();
@@ -289,8 +339,8 @@ public class Game {
 
         world = creator.createWorld(); // Actually creates the world with the values we set and sets it to the Game world.
         world.getWorldBorder().setSize(borderSize); // Sets world border of desired size
-        world.getWorldBorder().setDamageAmount(2);
-        world.getWorldBorder().setDamageBuffer(1);
+        world.getWorldBorder().setDamageAmount(2); // Damage from border
+        world.getWorldBorder().setDamageBuffer(1); // How far outside the border they can be
         world.setPVP(false); // Disables PVP for the world
         world.setGameRuleValue("doDaylightCycle", String.valueOf(hasNights));
         world.setGameRuleValue("naturalRegeneration", String.valueOf(naturalHealing));
@@ -298,49 +348,24 @@ public class Game {
         // For each player it chooses a random location and places them at the highest block.
         ActionBar tpMSG = new ActionBar(ChatColor.GREEN + "Teleporting in 2 seconds"); // Creates a actionbar packet to send to the player.
 
-        for (Player player : players) {
-            Location loc;
-            Biome biome;
+        if (!teamGame) {
+            for (Player player : players) {
+                Location loc = generateLocation();
+                world.getChunkAt(loc).load(true);
 
-            // Makes sure the player doesn't spawn in falling sand or an ocean
-            do {
-                int x = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random X value
-                int z = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random Z value
-                loc = getActualHighestBlock(world, x, z); // Gets actual highest block (hopefully)
-                biome = world.getBiome(loc.getBlockX(), loc.getBlockZ()); // Makes sure they dont spawn in a water biome such as an ocean
-            } while (loc.subtract(0, 2, 0).getBlock().getType() == Material.WATER ||
-                    biome == Biome.OCEAN || biome == Biome.DEEP_OCEAN || biome == Biome.RIVER || biome == Biome.BEACH || biome == Biome.COLD_BEACH || biome == Biome.STONE_BEACH);
+                tpMSG.sendToPlayer(player); // Sends a Actionbar packet to the player.
 
-            loc.getChunk().load(true); // Tries to load the chunk before hand
-            final Location tpLoc = loc; // Creates a final variable that we can use inside the runnable
+                teleportPlayer(player, loc);
+            }
+        } else {
+            for (UHCTeam team : teams) {
+                Location loc = generateLocation();
+                world.getChunkAt(loc).load(true);
 
-            tpMSG.sendToPlayer(player); // Sends a Actionbar packet to the player.
-
-            // Runs the teleportation 2 seconds later to attempt to let the chunk to load.
-            SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
-                @Override
-                public void run() {
-                    player.setHealth(20); // Makes sure they're max health
-                    player.setFoodLevel(20); // Makes sure they're max food
-                    player.setSaturation(20);
-
-                    player.getInventory().clear(); // Clears inventory
-                    player.getInventory().setArmorContents(null); // Clears armor
-                    player.updateInventory(); // Updates inventory for the player based off our changes
-
-                    player.setGameMode(GameMode.SURVIVAL); // Forces them to survival
-                    player.setFlying(false); // Disables their fly
-                    player.setAllowFlight(false); // Makes it so they're not allowed to fly
-
-                    player.teleport(tpLoc);
-
-                    if (state != GameState.GRACE) { // Starts grace period whenever the first player teleports
-                        state = GameState.GRACE; // Sets game to running as all players have teleported correctly.
-                        sendToPlayers(); // Updates the scoreboard for all the players
-                        startGracePeriod(); // Starts the grace period
-                    }
+                for (Player player : team.getMembers()) {
+                    teleportPlayer(player, loc);
                 }
-            }, 40L);
+            }
         }
     }
 
@@ -366,9 +391,7 @@ public class Game {
                     mainWorld = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")); // Sets it to preferred main world if it is in the config and is a world
 
                 for (Player p : world.getPlayers()) {
-                    p.getInventory().clear(); // Clears inventory
-                    p.getInventory().setArmorContents(null); // Clears armor
-                    p.updateInventory(); // Updates inventory for the player based off our changes
+                    fixPlayer(p);
                     p.teleport(mainWorld.getSpawnLocation()); // Teleports any existing players to the main world to prepare for world deletion
                 }
 
@@ -383,7 +406,41 @@ public class Game {
         }, 200L);
     }
 
-    private Location getActualHighestBlock(World world, int x, int z) {
+    private void teleportPlayer(Player player, Location loc) {
+        // Runs the teleportation 2 seconds later to attempt to let the chunk to load.
+        SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
+            @Override
+            public void run() {
+
+                fixPlayer(player);
+                player.teleport(loc);
+
+                if (state != GameState.GRACE) { // Starts grace period whenever the first player teleports
+                    state = GameState.GRACE; // Sets game to running as all players have teleported correctly.
+                    sendToPlayers(); // Updates the scoreboard for all the players
+                    startGracePeriod(); // Starts the grace period
+                }
+            }
+        }, 40L);
+    }
+
+    private Location generateLocation() {
+        Location loc;
+        Biome biome;
+
+        // Makes sure the player doesn't spawn in falling sand or an ocean
+        do {
+            int x = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random X value
+            int z = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random Z value
+            loc = getActualHighestBlock(x, z); // Gets actual highest block (hopefully)
+            biome = world.getBiome(loc.getBlockX(), loc.getBlockZ()); // Makes sure they dont spawn in a water biome such as an ocean
+        } while (loc.subtract(0, 2, 0).getBlock().getType() == Material.WATER ||
+                biome == Biome.OCEAN || biome == Biome.DEEP_OCEAN || biome == Biome.RIVER || biome == Biome.BEACH || biome == Biome.COLD_BEACH || biome == Biome.STONE_BEACH);
+
+        return loc;
+    }
+
+    private Location getActualHighestBlock(int x, int z) {
         Location loc = world.getHighestBlockAt(x, z).getLocation();
         for (int y = 255; y > 0; y--) {
             if (world.getBlockAt(x, y, z).getType() != Material.AIR) { // Makes sure they're above sea level (not in a cave) and that they are on a solid block
@@ -391,5 +448,24 @@ public class Game {
             }
         }
         return loc;
+    }
+
+    private void fixPlayer(Player p) {
+        p.setHealth(20); // Makes sure they're max health
+        p.setFoodLevel(20); // Makes sure they're max food
+        p.setSaturation(20); // Sets saturation to max
+
+        p.getInventory().clear(); // Clears inventory
+        p.getInventory().setArmorContents(null); // Clears armor
+        p.updateInventory(); // Updates inventory for the player based off our changes
+
+        p.setGameMode(GameMode.SURVIVAL); // Forces them to survival
+        p.setFlying(false); // Disables their fly
+        p.setAllowFlight(false); // Makes it so they're not allowed to fly
+
+        // Removes all potion effects
+        for (PotionEffect potion : p.getActivePotionEffects()) {
+            p.removePotionEffect(potion.getType());
+        }
     }
 }

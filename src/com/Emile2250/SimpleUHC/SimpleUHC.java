@@ -13,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Set;
 
 public class SimpleUHC extends JavaPlugin {
 
@@ -28,7 +29,7 @@ public class SimpleUHC extends JavaPlugin {
         createSettingsConfig();
         games = new ArrayList<>();
         instance = this;
-        deleteWorlds();
+        createGames();
 
         // Commands
 
@@ -85,17 +86,33 @@ public class SimpleUHC extends JavaPlugin {
         }
     }
 
-    private void deleteWorlds() {
+    private void createGames() {
+        if (settingsConfig.isConfigurationSection("Games")) {
+            Set<String> gameNames = settingsConfig.getConfigurationSection("Games").getKeys(false);
+            deleteWorlds(gameNames);
+
+            for (String game : gameNames) {
+                games.add(new Game(game));
+            }
+
+        } else {
+            System.out.println("Uh oh! There are no games to load, maybe try creating some");
+        }
+    }
+
+    private void deleteWorlds(Set<String> worlds) {
         String[] directories = this.getServer().getWorldContainer().list(); // Grabs a list of all files in the server
 
         if (directories != null) {
             for (String folder : directories) { // Loops through all the files
-                if (folder.contains("UHC-")) { // Checks if we had any left over UHC crashes in case of shutdown mid game
-                    try {
-                        FileUtils.deleteDirectory(new File(this.getServer().getWorldContainer(), folder)); // Tries to delete the world.
-                    } catch (IOException e) {
-                        System.out.println("Oh no! We had an issue deleting left over worlds");
-                        e.printStackTrace();
+                for (String world : worlds) {
+                    if (folder.contains(world)) { // Checks if we had any left over UHC crashes in case of shutdown mid game
+                        try {
+                            FileUtils.deleteDirectory(new File(this.getServer().getWorldContainer(), folder)); // Tries to delete the world.
+                        } catch (IOException e) {
+                            System.out.println("Oh no! We had an issue deleting left over worlds");
+                            e.printStackTrace();
+                        }
                     }
                 }
             }

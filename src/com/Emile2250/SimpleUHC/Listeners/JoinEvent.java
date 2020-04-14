@@ -3,7 +3,6 @@ package com.Emile2250.SimpleUHC.Listeners;
 import com.Emile2250.SimpleUHC.SimpleUHC;
 import com.Emile2250.SimpleUHC.Util.ChatUtil;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

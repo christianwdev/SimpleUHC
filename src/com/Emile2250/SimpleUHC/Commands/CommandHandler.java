@@ -9,12 +9,13 @@ public class CommandHandler implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
 
-        if (args.length == 1) {
+        if (args.length >= 1) {
             switch(args[0]) {
                 case "join":
                 case "quit":
                     return PlayerCommands.onCommand(sender, args);
                 case "start":
+                case "games":
                     return AdminCommands.onCommand(sender, args);
             }
         }

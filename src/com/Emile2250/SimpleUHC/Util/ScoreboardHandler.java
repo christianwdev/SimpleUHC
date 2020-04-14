@@ -35,79 +35,78 @@ public class ScoreboardHandler {
 
         lines = new ArrayList<>();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 15; i++) {
             lines.add(new ScoreboardLine(objective, "", i));
         }
     }
 
     // Updates the players stats
     private void updateBoard() {
+        // Changes the scoreboard for each state, as they all display something a little different
 
-        if (game.getState() != GameState.LOBBY && game.getState() != GameState.STARTING && game.getState() != GameState.GRACE) {
-            lines.get(9).update(" ");
-            lines.get(8).update("&aAlive");
-            lines.get(7).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
-            lines.get(6).update("  ");
-            lines.get(3).update("   ");
-            lines.get(0).update("    ");
+        String status = "";
+        if (game.getState() == GameState.STARTING) {
+            if (game.getCountdown() > 0) {
+                status = "&a" + game.getCountdown() + "s";
+            } else {
+                status = "&aStarting now";
+            }
+        } else if (game.getState() == GameState.LOBBY) {
+            status = "&aWaiting for players";
         }
 
-        // Changes the scoreboard for each state, as they all display something a little different
         switch (game.getState()) {
             case LOBBY:
-
-                lines.get(6).update("  ");
-                lines.get(5).update("&aUsers");
-                lines.get(4).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
-                lines.get(3).update("   ");
-                lines.get(2).update("&aStatus");
-                lines.get(1).update("&7Waiting for players");
-                lines.get(0).update("    ");
-
-                break;
             case STARTING:
 
-                lines.get(6).update("  ");
-                lines.get(5).update("&aUsers");
-                lines.get(4).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
-                lines.get(3).update("   ");
-                lines.get(2).update("&aStatus");
+                if (game.isTeamGame()) {
+                    lines.get(7).update(" ");
+                    lines.get(6).update("&fQueued: &a" + game.numPlayers());
+                    lines.get(5).update("    ");
+                    lines.get(4).update("&fTeammates: &a" + game.getTeam(player).getMembers().size());
+                } else {
+                    lines.get(5).update(" ");
+                    lines.get(4).update("&fQueued: &a" + game.numPlayers());
+                }
 
-                if (game.getCountdown() > 0)
-                    lines.get(1).update("&7Starting in " + game.getCountdown());
-                else
-                    lines.get(1).update("&7Starting now!");
-
-                lines.get(0).update("    ");
+                lines.get(3).update("  ");
+                lines.get(2).update("&fStatus");
+                lines.get(1).update(status);
+                lines.get(0).update("   ");
 
                 break;
             case GRACE:
-
-                lines.get(6).update("  ");
-                lines.get(5).update("&aAlive");
-                lines.get(4).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
-                lines.get(3).update("   ");
-                lines.get(2).update("&aGrace Period");
-                lines.get(1).update("&7" + game.getGracePeriod() / 60 + "m " + game.getGracePeriod() % 60 + "s");
-                lines.get(0).update("    ");
-
-                break;
             case PVP:
-
-                lines.get(5).update("&aKills");
-                lines.get(4).update("&7" + game.getKills(player));
-                lines.get(2).update("&aBorder");
-                lines.get(1).update("&7(" + -(game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
-
-                break;
             case FINISHED:
 
-                lines.get(8).update("&aWinner");
-                lines.get(7).update("&7" + game.getPlayers().get(0).getName());
-                lines.get(5).update("&aKills");
-                lines.get(4).update("&7" + game.getKills(player));
-                lines.get(2).update("&aStatus");
-                lines.get(1).update("&7Finished");
+                if (game.isTeamGame()) {
+
+                    lines.get(11).update(" ");
+                    lines.get(10).update("&fAlive: &a" + game.numPlayers());
+                    lines.get(9).update("  ");
+                    lines.get(8).update("&fTeams: &a" + game.getTeams().size());
+                    lines.get(7).update("   ");
+                    lines.get(6).update("&fTeammates: &a" + game.getTeam(player).getMembers().size());
+                    lines.get(5).update("    ");
+                    lines.get(4).update("&fKills: &a" + game.getKills(player));
+                    lines.get(3).update("     ");
+                    lines.get(2).update("&aBorder");
+                    lines.get(1).update("&7(" + (-game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
+                    lines.get(0).update("     ");
+
+                } else {
+
+                    lines.get(8).update(" ");
+                    lines.get(7).update("&fAlive: &a" + game.numPlayers());
+                    lines.get(6).update("  ");
+                    lines.get(5).update("    ");
+                    lines.get(4).update("&fKills: &a" + game.getKills(player));
+                    lines.get(3).update("     ");
+                    lines.get(2).update("&aBorder");
+                    lines.get(1).update("&7(" + (-game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
+                    lines.get(0).update("     ");
+
+                }
 
                 break;
         }
