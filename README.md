@@ -10,4 +10,4 @@ A standalone Minecraft UHC plugin that is ready to go within seconds. SimpleUHC 
 - [ ] Add a configuration to store player data
 - [ ] Change configuration to have a list of games and load games in on start of server
 - [ ] Create an API
-- [ ] ??? User boards
+- [ ] ??? User stories
