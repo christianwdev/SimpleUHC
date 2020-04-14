@@ -10,10 +10,12 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Scoreboard;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -35,7 +37,8 @@ public class Game {
     private GameState state;
     private BukkitTask task;
     private String gameName;
-    private ScoreboardHandler scoreboard;
+    private ArrayList<ScoreboardHandler> scoreboards;
+    HashMap<Player, Integer> kills;
     private int countdown;
 
     // Game constructor
@@ -46,7 +49,8 @@ public class Game {
         state = GameState.LOBBY;
         this.teamGame = teamGame;
         gameName = "UHC-" + SimpleUHC.getGames().size();
-        scoreboard = new ScoreboardHandler(this);
+        scoreboards = new ArrayList<>();
+        kills = new HashMap<>();
         countdown = 20;
 
         // Tries to load the actual game setting variables, if it errors it will use the defaults which is set in the catch statement.
@@ -77,19 +81,21 @@ public class Game {
     // Adds a player to the UHC Game
     public void addPlayer(Player player) {
         players.add(player);
+        kills.put(player, 0);
 
         if (players.size() == minPlayers && state == GameState.LOBBY) { // Checks if we are in lobby and we have minimum number of players to start.
             state = GameState.STARTING;
             startCountdown(); // Starts the countdown to start the game
         }
 
-        scoreboard.sendToPlayers(); // Updates the players as well as game state
+        sendToPlayers(); // Updates the players as well as game state
     }
 
     // Removes a player from the current UHCGame
     public void removePlayer(Player player) {
         players.remove(player);
-        scoreboard.wipeScoreboard(player);
+        removeBoard(player);
+        kills.remove(player);
 
         if (players.size() == minPlayers - 1 && state == GameState.STARTING) { // Checks if player count is less than amount needed to start & we are in lobby state.
             if (task != null) { // Makes sure there is an actual task running
@@ -109,7 +115,42 @@ public class Game {
             SimpleUHC.getGames().remove(this); // Removes game from list to be garbage collected
         }
 
-        scoreboard.sendToPlayers();
+        sendToPlayers();
+    }
+
+    // Updates boards for all players
+    private void sendToPlayers() {
+        for (Player p : players) {
+            getBoard(p).sendToPlayer();
+        }
+    }
+
+    // Finds the board associated with the player
+    private ScoreboardHandler getBoard(Player p) {
+        for (ScoreboardHandler s : scoreboards) {
+            if (s.getPlayer().equals(p)) {
+                return s;
+            }
+        }
+
+        scoreboards.add(new ScoreboardHandler(this, p));
+        return scoreboards.get(scoreboards.size() - 1);
+    }
+
+    // Removes the board from the player and list
+    private void removeBoard(Player p) {
+        scoreboards.remove(getBoard(p));
+        p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+    }
+
+    // Adds one kill
+    public void addKill(Player p) {
+        kills.put(p, kills.get(p) + 1);
+    }
+
+    // Returns a players kills
+    public int getKills(Player p) {
+        return kills.get(p);
     }
 
     // GETTERS
@@ -162,7 +203,7 @@ public class Game {
         }
 
         countdown = 0;
-        scoreboard.sendToPlayers();
+        sendToPlayers();
         start();
     }
 
@@ -173,7 +214,7 @@ public class Game {
             @Override
             public void run() {
                 countdown--;
-                scoreboard.sendToPlayers(); // Updates everyones scoreboard
+                sendToPlayers(); // Updates everyones scoreboard
 
                 if (countdown == 0) {
                     task.cancel(); // Cancels loop
@@ -191,7 +232,7 @@ public class Game {
             @Override
             public void run() {
                 gracePeriod--; // Removes a second from countdown
-                scoreboard.sendToPlayers(); // Updates everyones scoreboard
+                sendToPlayers(); // Updates everyones scoreboard
 
                 if (gracePeriod == 0) { // Checks if countdown is over.
                     task.cancel(); // Cancels loop
@@ -213,7 +254,7 @@ public class Game {
                 if (borderSize > 50) { // Changes the world border until there's a radius of 50
                     borderSize--; // Decrements world border radius
                     world.getWorldBorder().setSize(borderSize); // Updates world border
-                    scoreboard.sendToPlayers(); // Updates scoreboard
+                    sendToPlayers(); // Updates scoreboard
                 } else {
                     task.cancel(); // Stops running loop if radius is 25 blocks
                     task = null; // Sets tasks to null
@@ -291,7 +332,7 @@ public class Game {
 
                     if (state != GameState.GRACE) { // Starts grace period whenever the first player teleports
                         state = GameState.GRACE; // Sets game to running as all players have teleported correctly.
-                        scoreboard.sendToPlayers(); // Updates the scoreboard for all the players
+                        sendToPlayers(); // Updates the scoreboard for all the players
                         startGracePeriod(); // Starts the grace period
                     }
                 }
@@ -309,7 +350,11 @@ public class Game {
         SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
             @Override
             public void run() {
-                scoreboard.wipeAll();
+
+                for (Player p : players) {
+                    removeBoard(p);
+                }
+
                 players.clear(); // Removes all players from the game before deleting to allow for garbage collection
                 World mainWorld = Bukkit.getWorld("world"); // Default main world
 

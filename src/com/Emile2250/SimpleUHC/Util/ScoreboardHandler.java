@@ -19,54 +19,58 @@ public class ScoreboardHandler {
     private ArrayList<ScoreboardLine> lines;
 
     private Game game;
+    private Player player;
 
-    public ScoreboardHandler(Game g) {
+    public ScoreboardHandler(Game g, Player p) {
 
         game = g;
+        player = p;
 
         manager = Bukkit.getScoreboardManager();
         board = manager.getNewScoreboard(); // Creates a score board
 
-        objective = board.registerNewObjective(game.getGameName(), "dummy"); // Sets the scoreboard name to gamename and it can only change with commands
+        objective = board.registerNewObjective(game.getGameName(), "dummy"); // Sets the scoreboard name to game name and it can only change with commands
         objective.setDisplaySlot(DisplaySlot.SIDEBAR); // Set the position to be the sidebar
         objective.setDisplayName(ChatColor.GREEN + "" + ChatColor.BOLD + g.getGameName()); // Added the scoreboard header of UHC-?
 
         lines = new ArrayList<>();
 
-        for (int i = 0; i < 7; i++) {
-            lines.add(new ScoreboardLine(objective, " ", i));
+        for (int i = 0; i < 10; i++) {
+            lines.add(new ScoreboardLine(objective, "", i));
         }
-
-        updateBoard();
     }
 
-    // Updates the number of players as well as the game state
+    // Updates the players stats
     private void updateBoard() {
 
-        // These lines will never changed, they are blank lines.
-        // The reason they all have different length of spaces is due to each line needs to be unique
-
-        lines.get(6).update(" ");
-        lines.get(3).update("  ");
-        lines.get(0).update("   ");
-
-
-        // This is the same for every state except finished
-        if (game.getState() != GameState.FINISHED) {
-            lines.get(5).update("&aUsers");
-            lines.get(4).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
+        if (game.getState() != GameState.LOBBY && game.getState() != GameState.STARTING && game.getState() != GameState.GRACE) {
+            lines.get(9).update(" ");
+            lines.get(8).update("&aAlive");
+            lines.get(7).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
+            lines.get(6).update("  ");
+            lines.get(3).update("   ");
+            lines.get(0).update("    ");
         }
 
         // Changes the scoreboard for each state, as they all display something a little different
         switch (game.getState()) {
             case LOBBY:
 
+                lines.get(6).update("  ");
+                lines.get(5).update("&aUsers");
+                lines.get(4).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
+                lines.get(3).update("   ");
                 lines.get(2).update("&aStatus");
                 lines.get(1).update("&7Waiting for players");
+                lines.get(0).update("    ");
 
                 break;
             case STARTING:
 
+                lines.get(6).update("  ");
+                lines.get(5).update("&aUsers");
+                lines.get(4).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
+                lines.get(3).update("   ");
                 lines.get(2).update("&aStatus");
 
                 if (game.getCountdown() > 0)
@@ -74,23 +78,34 @@ public class ScoreboardHandler {
                 else
                     lines.get(1).update("&7Starting now!");
 
+                lines.get(0).update("    ");
+
                 break;
             case GRACE:
 
+                lines.get(6).update("  ");
+                lines.get(5).update("&aAlive");
+                lines.get(4).update("&7" + game.numPlayers() + "/" + game.getMaxPlayers());
+                lines.get(3).update("   ");
                 lines.get(2).update("&aGrace Period");
                 lines.get(1).update("&7" + game.getGracePeriod() / 60 + "m " + game.getGracePeriod() % 60 + "s");
+                lines.get(0).update("    ");
 
                 break;
             case PVP:
 
+                lines.get(5).update("&aKills");
+                lines.get(4).update("&7" + game.getKills(player));
                 lines.get(2).update("&aBorder");
                 lines.get(1).update("&7(" + -(game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
 
                 break;
             case FINISHED:
 
-                lines.get(5).update("&aWinner");
-                lines.get(4).update("&7" + game.getPlayers().get(0).getName());
+                lines.get(8).update("&aWinner");
+                lines.get(7).update("&7" + game.getPlayers().get(0).getName());
+                lines.get(5).update("&aKills");
+                lines.get(4).update("&7" + game.getKills(player));
                 lines.get(2).update("&aStatus");
                 lines.get(1).update("&7Finished");
 
@@ -99,20 +114,16 @@ public class ScoreboardHandler {
     }
 
     // Sends an updated scoreboard to all players
-    public void sendToPlayers() {
+    public void sendToPlayer() {
         updateBoard();
-        for (Player p : game.getPlayers()) {
-            p.setScoreboard(board);
-        }
+        player.setScoreboard(board);
     }
 
     public void wipeScoreboard(Player p) {
         p.setScoreboard(manager.getNewScoreboard());
     }
 
-    public void wipeAll() {
-        for (Player p : game.getPlayers()) {
-            p.setScoreboard(manager.getNewScoreboard());
-        }
+    public Player getPlayer() {
+        return player;
     }
 }
