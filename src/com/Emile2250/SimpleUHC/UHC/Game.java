@@ -359,7 +359,7 @@ public class Game {
                 World mainWorld = Bukkit.getWorld("world"); // Default main world
 
                 if (SimpleUHC.getSettings().isString("main-world") && Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")) != null)
-                    world = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")); // Sets it to preferred main world if it is in the config and is a world
+                    mainWorld = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")); // Sets it to preferred main world if it is in the config and is a world
 
                 for (Player p : world.getPlayers()) {
                     p.getInventory().clear(); // Clears inventory
