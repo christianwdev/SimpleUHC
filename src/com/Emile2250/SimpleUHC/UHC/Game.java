@@ -328,6 +328,10 @@ public class Game {
                     player.getInventory().setArmorContents(null); // Clears armor
                     player.updateInventory(); // Updates inventory for the player based off our changes
 
+                    player.setGameMode(GameMode.SURVIVAL); // Forces them to survival
+                    player.setFlying(false); // Disables their fly
+                    player.setAllowFlight(false); // Makes it so they're not allowed to fly
+
                     player.teleport(tpLoc);
 
                     if (state != GameState.GRACE) { // Starts grace period whenever the first player teleports
