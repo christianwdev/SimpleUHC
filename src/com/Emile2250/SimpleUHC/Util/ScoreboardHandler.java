@@ -119,10 +119,6 @@ public class ScoreboardHandler {
         player.setScoreboard(board);
     }
 
-    public void wipeScoreboard(Player p) {
-        p.setScoreboard(manager.getNewScoreboard());
-    }
-
     public Player getPlayer() {
         return player;
     }

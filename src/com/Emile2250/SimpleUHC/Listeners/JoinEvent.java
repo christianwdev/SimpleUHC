@@ -1,6 +1,7 @@
 package com.Emile2250.SimpleUHC.Listeners;
 
 import com.Emile2250.SimpleUHC.SimpleUHC;
+import com.Emile2250.SimpleUHC.Util.ChatUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -22,7 +23,7 @@ public class JoinEvent implements Listener {
                 world = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")); // Sets it to preferred main world if it is in the config and is a world
 
             player.teleport(world.getSpawnLocation()); // Teleports any existing players to the main world to prepare for world deletion
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', " &a&lUHC > &7We removed you from &b" + name));
+            ChatUtil.sendMessage(player, " &a&lUHC > &7We removed you from &b" + name);
         }
     }
 

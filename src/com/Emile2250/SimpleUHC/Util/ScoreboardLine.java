@@ -1,6 +1,5 @@
 package com.Emile2250.SimpleUHC.Util;
 
-import org.bukkit.ChatColor;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
@@ -25,10 +24,10 @@ public class ScoreboardLine {
     public void update(String text) {
         board.resetScores(previous); // Removes the previous line from scoreboard
 
-        score = obj.getScore(ChatColor.translateAlternateColorCodes('&', text)); // Creates new updated scoreboard line
+        score = obj.getScore(ChatUtil.color(text)); // Creates new updated scoreboard line
         score.setScore(line); // Sets it to the appropriate score (line)
 
-        previous = ChatColor.translateAlternateColorCodes('&', text); // Updates the previous text so we can reset it next update
+        previous = ChatUtil.color(text); // Updates the previous text so we can reset it next update
     }
 
 }

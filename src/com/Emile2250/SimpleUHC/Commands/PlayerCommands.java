@@ -3,6 +3,7 @@ package com.Emile2250.SimpleUHC.Commands;
 import com.Emile2250.SimpleUHC.SimpleUHC;
 import com.Emile2250.SimpleUHC.UHC.Game;
 import com.Emile2250.SimpleUHC.UHC.GameState;
+import com.Emile2250.SimpleUHC.Util.ChatUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -17,7 +18,7 @@ public class PlayerCommands {
 
                 for (Game game : SimpleUHC.getGames()) {
                     if (game.getPlayers().contains(player)) { // Makes sure they're not currently in a queue
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', " &a&lUHC > &7You're already in &b" + game.getGameName()));
+                        ChatUtil.sendMessage(player, " &a&lUHC > &7You're already in &b" + game.getGameName());
                         return false;
                     }
                 }
@@ -25,7 +26,7 @@ public class PlayerCommands {
                 for (Game game : SimpleUHC.getGames()) { // Runs through the list of available game
                     if ((game.getState() == GameState.LOBBY || game.getState() == GameState.STARTING) && game.numPlayers() < game.getMaxPlayers()) { // Finds the first available game to queue in
                         game.addPlayer(player); // Adds player to the game to queue in
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', " &a&lUHC > &7You successfully joined &b" + game.getGameName()));
+                        ChatUtil.sendMessage(player, " &a&lUHC > &7You successfully joined &b" + game.getGameName());
                         return false; // Stops the method call as we did what we needed.
                     }
                 }
@@ -34,16 +35,16 @@ public class PlayerCommands {
                 Game game = new Game(false); // TODO add team implementation
                 game.addPlayer(player); // Adds the player to the game
                 SimpleUHC.getGames().add(game); // Adds the game to the game list
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', " &a&lUHC > &7You successfully joined &b" + game.getGameName()));
+                ChatUtil.sendMessage(player, " &a&lUHC > &7You successfully joined &b" + game.getGameName());
 
             } else if (args[0].equalsIgnoreCase("quit")) {
                 for (Game game : SimpleUHC.getGames()) {
                     if (game.getPlayers().contains(player)) { // Makes sure they're not currently in a queue
                         if (game.getState() == GameState.LOBBY || game.getState() == GameState.STARTING) {
                             game.removePlayer(player);
-                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', " &a&lUHC > &7You successfully left &b" + game.getGameName()));
+                            ChatUtil.sendMessage(player, " &a&lUHC > &7You successfully left &b" + game.getGameName());
                         } else {
-                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', " &a&lUHC > &7You cannot leave mid game."));
+                            ChatUtil.sendMessage(player, " &a&lUHC > &7You cannot leave mid game.");
                             return false;
                         }
                     }
