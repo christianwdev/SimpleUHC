@@ -6,6 +6,7 @@ A standalone Minecraft UHC plugin that is ready to go within seconds. SimpleUHC 
 - [x] Create a working UHC
 - [x] Disabled spawn chunk generation
 - [x] Can change some vanilla values
+- [x] Team Gamems
 - [ ] Add more configuration for things such as the border
 - [ ] Add a configuration to store player data
 - [x] Change configuration to have a list of games and load games in on start of server
