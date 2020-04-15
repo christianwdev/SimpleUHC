@@ -1,6 +1,7 @@
 package com.Emile2250.SimpleUHC.Listeners;
 
 import com.Emile2250.SimpleUHC.SimpleUHC;
+import com.Emile2250.SimpleUHC.Stats.StatsHandler;
 import com.Emile2250.SimpleUHC.UHC.Game;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -14,10 +15,11 @@ public class UHCDeath implements Listener {
         if (e.getEntity() != null) { // Makes sure it was a player that died
             Player player = e.getEntity(); // Creates a variable for future use
 
-            for (Game game : SimpleUHC.getGames()) {
+            for (Game game : SimpleUHC.getInstance().getGames()) {
                 if (game.getPlayers().contains(player)) { // Checks if the player died within a UHC game
 
                     if (e.getEntity().getKiller() != null) {
+                        StatsHandler.addKill(e.getEntity().getKiller());
                         game.addKill(e.getEntity().getKiller());
                     }
 

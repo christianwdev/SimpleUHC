@@ -14,7 +14,7 @@ public class LeaveEvent implements Listener {
 
         Player player = e.getPlayer();
 
-        for (Game game : SimpleUHC.getGames()) {
+        for (Game game : SimpleUHC.getInstance().getGames()) {
             if (game.getPlayers().contains(player)) { // Checks if the player quit in a UHC game
                 game.removePlayer(player); // Removes the player from the game.
                 return; // Since we handled the death there is no need to continue the code

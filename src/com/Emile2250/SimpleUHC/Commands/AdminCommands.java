@@ -16,7 +16,7 @@ public class AdminCommands {
             Player player = (Player) sender; // Sets a variable for future use
             if (args[0].equalsIgnoreCase("start")) { // Checks if they are trying to queue
                 if (player.hasPermission("uhc.forcestart")) { // Checks for permission to start.
-                    for (Game game : SimpleUHC.getGames()) { // Runs through the list of available game
+                    for (Game game : SimpleUHC.getInstance().getGames()) { // Runs through the list of available game
                         if (game.getPlayers().contains(player)) { // Makes sure they're in a game
                             if ((game.getState() == GameState.LOBBY || game.getState() == GameState.STARTING) && game.getPlayers().size() > 1
                                     && (!game.isTeamGame() || (game.isTeamGame() && game.getTeams().size() > 1))) { // Makes sure they're not already in a running game and has 2 players or 2 teamms

@@ -1,9 +1,11 @@
 package com.Emile2250.SimpleUHC.UHC;
 
 import com.Emile2250.SimpleUHC.SimpleUHC;
+import com.Emile2250.SimpleUHC.Stats.StatsHandler;
 import com.Emile2250.SimpleUHC.Util.ActionBar;
 import com.Emile2250.SimpleUHC.Util.ChatUtil;
 import com.Emile2250.SimpleUHC.Util.ScoreboardHandler;
+import com.sun.org.glassfish.external.statistics.Stats;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
@@ -44,7 +46,7 @@ public class Game {
 
     // Game constructor
     public Game(String name) {
-        FileConfiguration settings = SimpleUHC.getSettings();
+        FileConfiguration settings = SimpleUHC.getInstance().getSettings();
 
         players = new ArrayList<>();
         state = GameState.LOBBY;
@@ -136,15 +138,20 @@ public class Game {
                 task.cancel(); // Cancels the countdown
                 task = null;
             }
-        } else if ((numPlayers() == 1 || teams.size() == 1) && (state == GameState.GRACE || state == GameState.PVP)) {
-            if (task != null) {
-                task.cancel();
-                task = null;
-            }
+        } else if (state == GameState.GRACE || state == GameState.PVP) {
 
-            state = GameState.FINISHED; // Tells us the game is finished
-            stop(); // Finishes game by deleting world and teleporting everyone out
-            SimpleUHC.getGames().remove(this); // Removes game from list to be garbage collected
+            StatsHandler.addDeath(player);
+
+            if ((numPlayers() == 1 || teams.size() == 1)) {
+                if (task != null) {
+                    task.cancel(); // Stops grace / pvp period
+                    task = null;
+                }
+
+                state = GameState.FINISHED; // Tells us the game is finished
+                stop(); // Finishes game by deleting world and teleporting everyone out
+                SimpleUHC.getInstance().getGames().remove(this); // Removes game from list to be garbage collected
+            }
         }
 
         sendToPlayers();
@@ -317,7 +324,7 @@ public class Game {
     }
 
     public void start() {
-        FileConfiguration settings = SimpleUHC.getSettings(); // Gets updated configuration
+        FileConfiguration settings = SimpleUHC.getInstance().getSettings(); // Gets updated configuration
 
         // Sets the world creation values
         WorldCreator creator = new WorldCreator(gameName); // Creates a world with the game name
@@ -353,6 +360,7 @@ public class Game {
 
         if (!teamGame) {
             for (Player player : players) {
+                StatsHandler.addGame(player);
                 Location loc = generateLocation();
                 world.getChunkAt(loc).load(true);
 
@@ -366,6 +374,7 @@ public class Game {
                 world.getChunkAt(loc).load(true);
 
                 for (Player player : team.getMembers()) {
+                    StatsHandler.addGame(player);
                     teleportPlayer(player, loc);
                 }
             }
@@ -384,14 +393,15 @@ public class Game {
             public void run() {
 
                 for (Player p : players) {
+                    StatsHandler.addWin(p);
                     removeBoard(p);
                 }
 
                 players.clear(); // Removes all players from the game before deleting to allow for garbage collection
-                World mainWorld = Bukkit.getWorld("world"); // Default main world
+                World mainWorld = Bukkit.getWorlds().get(0); // Grabs a world
 
-                if (SimpleUHC.getSettings().isString("main-world") && Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")) != null)
-                    mainWorld = Bukkit.getWorld(SimpleUHC.getSettings().getString("main-world")); // Sets it to preferred main world if it is in the config and is a world
+                if (SimpleUHC.getInstance().getSettings().isString("main-world") && Bukkit.getWorld(SimpleUHC.getInstance().getSettings().getString("main-world")) != null)
+                    mainWorld = Bukkit.getWorld(SimpleUHC.getInstance().getSettings().getString("main-world")); // Sets it to preferred main world if it is in the config and is a world
 
                 for (Player p : world.getPlayers()) {
                     fixPlayer(p);

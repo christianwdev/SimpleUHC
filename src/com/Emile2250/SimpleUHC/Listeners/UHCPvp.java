@@ -16,7 +16,7 @@ public class UHCPvp implements Listener {
             Player hit = (Player) e.getEntity();
             Player attacker = (Player) e.getDamager();
 
-            for (Game game : SimpleUHC.getGames()) { // Goes through all games
+            for (Game game : SimpleUHC.getInstance().getGames()) { // Goes through all games
                 if (game.getPlayers().contains(hit)) { // Makes sure that user is in that game
                     if (game.isTeamGame()) { // Makes sure that its a team game
                         for (UHCTeam team : game.getTeams()) { // Checks all teams in that game

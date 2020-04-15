@@ -11,13 +11,8 @@ import java.util.ArrayList;
 
 public class ScoreboardHandler {
 
-    private ScoreboardManager manager;
     private Scoreboard board;
-
-    private Objective objective;
-
     private ArrayList<ScoreboardLine> lines;
-
     private Game game;
     private Player player;
 
@@ -26,10 +21,10 @@ public class ScoreboardHandler {
         game = g;
         player = p;
 
-        manager = Bukkit.getScoreboardManager();
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
         board = manager.getNewScoreboard(); // Creates a score board
 
-        objective = board.registerNewObjective(game.getGameName(), "dummy"); // Sets the scoreboard name to game name and it can only change with commands
+        Objective objective = board.registerNewObjective(game.getGameName(), "dummy"); // Sets the scoreboard name to game name and it can only change with commands
         objective.setDisplaySlot(DisplaySlot.SIDEBAR); // Set the position to be the sidebar
         objective.setDisplayName(ChatColor.GREEN + "" + ChatColor.BOLD + g.getGameName()); // Added the scoreboard header of UHC-?
 

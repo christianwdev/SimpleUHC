@@ -17,16 +17,18 @@ import java.util.Set;
 
 public class SimpleUHC extends JavaPlugin {
 
-    private static File settingsFile;
-    private static FileConfiguration settingsConfig;
-    private static ArrayList<Game> games;
+    private File settingsFile;
+    private FileConfiguration settingsConfig;
+    private File statsFile;
+    private FileConfiguration statsConfig;
+    private ArrayList<Game> games;
     private static SimpleUHC instance;
 
     public void onEnable() {
 
         // Variable setup
 
-        createSettingsConfig();
+        createConfigs();
         games = new ArrayList<>();
         instance = this;
         createGames();
@@ -46,11 +48,15 @@ public class SimpleUHC extends JavaPlugin {
 
     // Getters
 
-    public static FileConfiguration getSettings() {
+    public FileConfiguration getSettings() {
         return settingsConfig;
     }
 
-    public static ArrayList<Game> getGames() {
+    public FileConfiguration getStats() {
+        return statsConfig;
+    }
+
+    public ArrayList<Game> getGames() {
         return games;
     }
 
@@ -60,7 +66,7 @@ public class SimpleUHC extends JavaPlugin {
 
     // Other stuff?
 
-    public static void saveSettings() {
+    public void saveSettings() {
         try {
             settingsConfig.save(settingsFile);
         } catch (IOException e) {
@@ -69,17 +75,34 @@ public class SimpleUHC extends JavaPlugin {
         }
     }
 
-    private void createSettingsConfig() {
+    public void saveStats() {
+        try {
+            statsConfig.save(statsFile);
+        } catch (IOException e) {
+            System.out.println("Uh oh! You had an issue saving your settings configuration.");
+            e.printStackTrace();
+        }
+    }
+
+    private void createConfigs() {
         settingsFile = new File(getDataFolder(), "settings.yml"); // Initializes the settingsFile
+        statsFile = new File(getDataFolder(), "stats.yml");
 
         if (!settingsFile.exists()) { // Checks if the file exists
             settingsFile.getParentFile().mkdirs(); // Creates the directories if they don't exist
             saveResource("settings.yml", false); // Saves the settings.yml file without replacing it.
         }
 
+        if (!statsFile.exists()) { // Makes sure it doesnt exist
+            statsFile.getParentFile().mkdirs(); // Creates dir
+            saveResource("stats.yml", false); // Saves file
+        }
+
         settingsConfig = new YamlConfiguration(); // Initializes the base config object.
+        statsConfig = new YamlConfiguration(); // Creates object
         try {
             settingsConfig.load(settingsFile); // Actually tries to load the configuration
+            statsConfig.load(statsFile); // Loads config
         } catch (IOException | InvalidConfigurationException e) {
             System.out.println("Uh oh! Your configuration loaded incorrectly.");
             e.printStackTrace();
