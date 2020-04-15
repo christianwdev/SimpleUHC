@@ -4,4 +4,4 @@ version: 1.0
 
 commands:
   uhc:
-    description: Base command for SimpleUHC
+    description: Base command for UHC.

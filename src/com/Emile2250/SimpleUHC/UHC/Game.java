@@ -2,6 +2,7 @@ package com.Emile2250.SimpleUHC.UHC;
 
 import com.Emile2250.SimpleUHC.SimpleUHC;
 import com.Emile2250.SimpleUHC.Util.ActionBar;
+import com.Emile2250.SimpleUHC.Util.ChatUtil;
 import com.Emile2250.SimpleUHC.Util.ScoreboardHandler;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.*;
@@ -258,9 +259,11 @@ public class Game {
     }
 
     public void startCountdown() {
+
+        ChatUtil.broadcast(" &a&lUHC > &7" + gameName + " &7is starting in &a" + countdown + " &7seconds.");
+
         // Essentially creates a "loop" that runs every X ticks (in this case 1 second) and runs the run() code
         task = SimpleUHC.getInstance().getServer().getScheduler().runTaskTimer(SimpleUHC.getInstance(), new Runnable() {
-
             @Override
             public void run() {
                 countdown--;
@@ -346,7 +349,7 @@ public class Game {
         world.setGameRuleValue("naturalRegeneration", String.valueOf(naturalHealing));
 
         // For each player it chooses a random location and places them at the highest block.
-        ActionBar tpMSG = new ActionBar(ChatColor.GREEN + "Teleporting in 2 seconds"); // Creates a actionbar packet to send to the player.
+        ActionBar tpMSG = new ActionBar(ChatColor.GREEN + "Teleporting in 3 seconds"); // Creates a actionbar packet to send to the player.
 
         if (!teamGame) {
             for (Player player : players) {
@@ -407,7 +410,7 @@ public class Game {
     }
 
     private void teleportPlayer(Player player, Location loc) {
-        // Runs the teleportation 2 seconds later to attempt to let the chunk to load.
+        // Runs the teleportation 3 seconds later to attempt to let the chunk to load.
         SimpleUHC.getInstance().getServer().getScheduler().runTaskLater(SimpleUHC.getInstance(), new Runnable() {
             @Override
             public void run() {
@@ -421,7 +424,7 @@ public class Game {
                     startGracePeriod(); // Starts the grace period
                 }
             }
-        }, 40L);
+        }, 60L);
     }
 
     private Location generateLocation() {
@@ -434,8 +437,8 @@ public class Game {
             int z = ThreadLocalRandom.current().nextInt(borderSize) - borderSize / 2; // Grabs a random Z value
             loc = getActualHighestBlock(x, z); // Gets actual highest block (hopefully)
             biome = world.getBiome(loc.getBlockX(), loc.getBlockZ()); // Makes sure they dont spawn in a water biome such as an ocean
-        } while (loc.subtract(0, 2, 0).getBlock().getType() == Material.WATER ||
-                biome == Biome.OCEAN || biome == Biome.DEEP_OCEAN || biome == Biome.RIVER || biome == Biome.BEACH || biome == Biome.COLD_BEACH || biome == Biome.STONE_BEACH);
+        } while (loc.subtract(0, 2, 0).getBlock().getType() == Material.WATER || biome == Biome.OCEAN || biome == Biome.DEEP_OCEAN || biome == Biome.RIVER ||
+                biome == Biome.BEACH || biome == Biome.COLD_BEACH || biome == Biome.STONE_BEACH || loc.getY() < world.getSeaLevel());
 
         return loc;
     }
@@ -467,5 +470,9 @@ public class Game {
         for (PotionEffect potion : p.getActivePotionEffects()) {
             p.removePotionEffect(potion.getType());
         }
+    }
+
+    public boolean isJoinable() {
+        return (state == GameState.LOBBY || state == GameState.STARTING) && numPlayers() < maxPlayers;
     }
 }

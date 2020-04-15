@@ -30,18 +30,6 @@ public class AdminCommands {
                         }
                     }
                 }
-            } else if (args[0].equalsIgnoreCase("games")) {
-                if (player.hasPermission("uhc.listgames")) {
-                    ChatUtil.sendMessage(player, " ");
-                    if (SimpleUHC.getGames().size() > 0) {
-                        for (Game game : SimpleUHC.getGames()) {
-                            ChatUtil.sendMessage(player, " &a&l" + game.getGameName() + " > &7" + game.getState());
-                        }
-                    } else {
-                        ChatUtil.sendMessage(player, " &a&lUHC > &7There are no games, go create some.");
-                    }
-                    ChatUtil.sendMessage(player, " ");
-                }
             }
         }
 

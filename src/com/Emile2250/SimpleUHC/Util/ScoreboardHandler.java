@@ -76,6 +76,36 @@ public class ScoreboardHandler {
 
                 break;
             case GRACE:
+
+                if (game.isTeamGame()) {
+
+                    lines.get(11).update(" ");
+                    lines.get(10).update("&fAlive: &a" + game.numPlayers());
+                    lines.get(9).update("  ");
+                    lines.get(8).update("&fTeams: &a" + game.getTeams().size());
+                    lines.get(7).update("   ");
+                    lines.get(6).update("&fTeammates: &a" + game.getTeam(player).getMembers().size());
+                    lines.get(5).update("    ");
+                    lines.get(4).update("&fGrace: &a" + game.getGracePeriod() / 60 + "m " + game.getGracePeriod() % 60 + "s");
+                    lines.get(3).update("     ");
+                    lines.get(2).update("&fBorder");
+                    lines.get(1).update("&a(" + (-game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
+                    lines.get(0).update("      ");
+
+                } else {
+
+                    lines.get(7).update(" ");
+                    lines.get(6).update("&fAlive: &a" + game.numPlayers());
+                    lines.get(5).update("  ");
+                    lines.get(4).update("&fGrace: &a" + game.getGracePeriod() / 60 + "m " + game.getGracePeriod() % 60 + "s");
+                    lines.get(3).update("   ");
+                    lines.get(2).update("&fBorder");
+                    lines.get(1).update("&a(" + (-game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
+                    lines.get(0).update("    ");
+
+                }
+
+                break;
             case PVP:
             case FINISHED:
 
@@ -90,20 +120,19 @@ public class ScoreboardHandler {
                     lines.get(5).update("    ");
                     lines.get(4).update("&fKills: &a" + game.getKills(player));
                     lines.get(3).update("     ");
-                    lines.get(2).update("&aBorder");
-                    lines.get(1).update("&7(" + (-game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
-                    lines.get(0).update("     ");
+                    lines.get(2).update("&fBorder");
+                    lines.get(1).update("&a(" + (-game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
+                    lines.get(0).update("      ");
 
                 } else {
 
-                    lines.get(8).update(" ");
-                    lines.get(7).update("&fAlive: &a" + game.numPlayers());
-                    lines.get(6).update("  ");
-                    lines.get(5).update("    ");
+                    lines.get(7).update(" ");
+                    lines.get(6).update("&fAlive: &a" + game.numPlayers());
+                    lines.get(5).update("  ");
                     lines.get(4).update("&fKills: &a" + game.getKills(player));
-                    lines.get(3).update("     ");
-                    lines.get(2).update("&aBorder");
-                    lines.get(1).update("&7(" + (-game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
+                    lines.get(3).update("   ");
+                    lines.get(2).update("&fBorder");
+                    lines.get(1).update("&a(" + (-game.getBorderSize() / 2) + ", " + (game.getBorderSize() / 2) + ")");
                     lines.get(0).update("     ");
 
                 }
