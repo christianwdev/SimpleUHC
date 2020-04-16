@@ -3,6 +3,7 @@ package com.Emile2250.SimpleUHC;
 import com.Emile2250.SimpleUHC.Commands.CommandHandler;
 import com.Emile2250.SimpleUHC.Listeners.*;
 import com.Emile2250.SimpleUHC.UHC.Game;
+import com.Emile2250.SimpleUHC.Util.ConfigUtil;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -17,10 +18,8 @@ import java.util.Set;
 
 public class SimpleUHC extends JavaPlugin {
 
-    private File settingsFile;
-    private FileConfiguration settingsConfig;
-    private File statsFile;
-    private FileConfiguration statsConfig;
+    private ConfigUtil settings;
+    private ConfigUtil stats;
     private ArrayList<Game> games;
     private static SimpleUHC instance;
 
@@ -28,7 +27,10 @@ public class SimpleUHC extends JavaPlugin {
 
         // Variable setup
 
-        createConfigs();
+        // Creates configs
+        settings = new ConfigUtil("settings.yml");
+        stats = new ConfigUtil("stats.yml");
+
         games = new ArrayList<>();
         instance = this;
         createGames();
@@ -48,12 +50,12 @@ public class SimpleUHC extends JavaPlugin {
 
     // Getters
 
-    public FileConfiguration getSettings() {
-        return settingsConfig;
+    public ConfigUtil getSettings() {
+        return settings;
     }
 
-    public FileConfiguration getStats() {
-        return statsConfig;
+    public ConfigUtil getStats() {
+        return stats;
     }
 
     public ArrayList<Game> getGames() {
@@ -66,52 +68,9 @@ public class SimpleUHC extends JavaPlugin {
 
     // Other stuff?
 
-    public void saveSettings() {
-        try {
-            settingsConfig.save(settingsFile);
-        } catch (IOException e) {
-            System.out.println("Uh oh! You had an issue saving your settings configuration.");
-            e.printStackTrace();
-        }
-    }
-
-    public void saveStats() {
-        try {
-            statsConfig.save(statsFile);
-        } catch (IOException e) {
-            System.out.println("Uh oh! You had an issue saving your settings configuration.");
-            e.printStackTrace();
-        }
-    }
-
-    private void createConfigs() {
-        settingsFile = new File(getDataFolder(), "settings.yml"); // Initializes the settingsFile
-        statsFile = new File(getDataFolder(), "stats.yml");
-
-        if (!settingsFile.exists()) { // Checks if the file exists
-            settingsFile.getParentFile().mkdirs(); // Creates the directories if they don't exist
-            saveResource("settings.yml", false); // Saves the settings.yml file without replacing it.
-        }
-
-        if (!statsFile.exists()) { // Makes sure it doesnt exist
-            statsFile.getParentFile().mkdirs(); // Creates dir
-            saveResource("stats.yml", false); // Saves file
-        }
-
-        settingsConfig = new YamlConfiguration(); // Initializes the base config object.
-        statsConfig = new YamlConfiguration(); // Creates object
-        try {
-            settingsConfig.load(settingsFile); // Actually tries to load the configuration
-            statsConfig.load(statsFile); // Loads config
-        } catch (IOException | InvalidConfigurationException e) {
-            System.out.println("Uh oh! Your configuration loaded incorrectly.");
-            e.printStackTrace();
-        }
-    }
-
     private void createGames() {
-        if (settingsConfig.isConfigurationSection("Games")) {
-            Set<String> gameNames = settingsConfig.getConfigurationSection("Games").getKeys(false);
+        if (stats.isSection("Games")) {
+            Set<String> gameNames = stats.getSection("Games").getKeys(false);
             deleteWorlds(gameNames);
 
             for (String game : gameNames) {

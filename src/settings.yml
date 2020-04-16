@@ -9,6 +9,9 @@ Games:
     has-nights: false
     natural-healing: false
     team-game: false
+    countdown: 90
+    border-damage: 2
+    border-buffer: 1
   UHC-1:
     max-players: 50
     min-players: 10
@@ -17,6 +20,9 @@ Games:
     has-nights: false
     natural-healing: false
     team-game: false
+    countdown: 90
+    border-damage: 2
+    border-buffer: 1
   UHC-2:
     max-players: 50
     min-players: 10
@@ -26,6 +32,9 @@ Games:
     natural-healing: false
     team-game: true
     team-size: 2
+    countdown: 90
+    border-damage: 2
+    border-buffer: 1
   UHC-3:
     max-players: 50
     min-players: 10
@@ -35,6 +44,9 @@ Games:
     natural-healing: false
     team-game: true
     team-size: 2
+    countdown: 90
+    border-damage: 2
+    border-buffer: 1
 
 ### EXAMPLE ###
 # Seeds:

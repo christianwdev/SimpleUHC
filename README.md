@@ -8,7 +8,7 @@ A standalone Minecraft UHC plugin that is ready to go within seconds. SimpleUHC 
 - [x] Can change some vanilla values
 - [x] Team Games
 - [ ] Add more configuration for things such as the border
-- [ ] Add a configuration to store player data
+- [x] Add a configuration to store player data
 - [x] Change configuration to have a list of games and load games in on start of server
-- [ ] Create an API
+- [x] Create an API
 - [ ] ??? User stories

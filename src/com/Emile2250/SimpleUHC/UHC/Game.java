@@ -2,16 +2,11 @@ package com.Emile2250.SimpleUHC.UHC;
 
 import com.Emile2250.SimpleUHC.SimpleUHC;
 import com.Emile2250.SimpleUHC.Stats.StatsHandler;
-import com.Emile2250.SimpleUHC.Util.ActionBar;
-import com.Emile2250.SimpleUHC.Util.ChatUtil;
-import com.Emile2250.SimpleUHC.Util.ScoreboardHandler;
-import com.sun.org.glassfish.external.statistics.Stats;
+import com.Emile2250.SimpleUHC.Util.*;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
@@ -20,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static com.Emile2250.SimpleUHC.Util.PlayerUtil.fixPlayer;
 
 public class Game {
 
@@ -31,6 +28,9 @@ public class Game {
     private int teamSize;
     private boolean hasNights;
     private boolean naturalHealing;
+    private int countdown;
+    private double borderDamage;
+    private double borderBuffer;
 
     // Game Variables
     private ArrayList<Player> players;
@@ -42,51 +42,37 @@ public class Game {
     private String gameName;
     private ArrayList<ScoreboardHandler> scoreboards;
     HashMap<Player, Integer> kills;
-    private int countdown;
 
     // Game constructor
     public Game(String name) {
-        FileConfiguration settings = SimpleUHC.getInstance().getSettings();
+        gameName = name;
+        Initialize();
+    }
+
+    private void Initialize() {
+        ConfigUtil settings = SimpleUHC.getInstance().getSettings();
 
         players = new ArrayList<>();
         state = GameState.LOBBY;
-        gameName = name;
         teams = new ArrayList<>();
         scoreboards = new ArrayList<>();
         kills = new HashMap<>();
-        countdown = 20;
 
-        // Tries to load the actual game setting variables, if it errors it will use the defaults which is set in the catch statement.
-        try {
+        // Tries to load the actual game setting variables
+        String path = "Games." + gameName + ".";
 
-            maxPlayers = settings.getInt("Games." + name + ".max-players");
-            minPlayers = settings.getInt("Games." + name + ".min-players");
-            borderSize = settings.getInt("Games." + name + ".border-size");
-            gracePeriod = settings.getInt("Games." + name + ".grace-period");
-            naturalHealing = settings.getBoolean("Games." + name + ".natural-healing");
-            hasNights = settings.getBoolean("Games." + name + ".has-nights");
-            teamGame = settings.getBoolean("Games." + name + ".team-game");
+        maxPlayers = settings.isInt(path + "max-players") ? settings.getInt(path + "max-players") : 50;
+        minPlayers = settings.isInt(path + "min-players") ? settings.getInt(path + "min-players") : 10;
+        borderSize = settings.isInt(path + "border-size") ? settings.getInt(path + "border-size") : 1500;
+        gracePeriod = settings.isInt(path + "grace-period") ? settings.getInt(path + "grace-period") : 900;
+        naturalHealing = settings.isBool(path + "natural-healing") && settings.getBool(path + "natural-healing");
+        hasNights = !settings.isBool(path + "has-nights") || settings.getBool(path + "has-nights");
+        teamGame = settings.isBool(path + "team-game") && settings.getBool(path + "team-game");
+        teamSize = teamGame ? settings.getInt(path + "team-size") : 0;
+        countdown = settings.isInt(path + "countdown") ? settings.getInt(path + "countdown") : 90;
+        borderDamage = settings.isDouble(path + "border-damage") ? settings.getDouble(path + "border-damage") : 2;
+        borderBuffer = settings.isDouble(path + "border-buffer") ? settings.getDouble(path + "border-buffer") : 2;
 
-            if (teamGame)
-                teamSize = settings.getInt("Games." + name + ".team-size");
-            else
-                teamSize = 0;
-
-        } catch (Exception e) {
-
-            // Sets defaults values in case of a configuration issue.
-            maxPlayers = 50;
-            minPlayers = 10;
-            borderSize = 2000;
-            gracePeriod = 600;
-            hasNights = true;
-            naturalHealing = true;
-            teamGame = false;
-            teamSize = 0;
-
-            System.out.println("Uh oh! You had an error with your settings configuration for " + gameName);
-            e.printStackTrace();
-        }
     }
 
     // Adds a player to the UHC Game
@@ -150,7 +136,6 @@ public class Game {
 
                 state = GameState.FINISHED; // Tells us the game is finished
                 stop(); // Finishes game by deleting world and teleporting everyone out
-                SimpleUHC.getInstance().getGames().remove(this); // Removes game from list to be garbage collected
             }
         }
 
@@ -324,7 +309,7 @@ public class Game {
     }
 
     public void start() {
-        FileConfiguration settings = SimpleUHC.getInstance().getSettings(); // Gets updated configuration
+        ConfigUtil settings = SimpleUHC.getInstance().getSettings(); // Gets updated configuration
 
         // Sets the world creation values
         WorldCreator creator = new WorldCreator(gameName); // Creates a world with the game name
@@ -349,8 +334,8 @@ public class Game {
 
         world = creator.createWorld(); // Actually creates the world with the values we set and sets it to the Game world.
         world.getWorldBorder().setSize(borderSize); // Sets world border of desired size
-        world.getWorldBorder().setDamageAmount(2); // Damage from border
-        world.getWorldBorder().setDamageBuffer(1); // How far outside the border they can be
+        world.getWorldBorder().setDamageAmount(borderDamage); // Damage from border
+        world.getWorldBorder().setDamageBuffer(borderBuffer); // How far outside the border they can be
         world.setPVP(false); // Disables PVP for the world
         world.setGameRuleValue("doDaylightCycle", String.valueOf(hasNights));
         world.setGameRuleValue("naturalRegeneration", String.valueOf(naturalHealing));
@@ -415,6 +400,8 @@ public class Game {
                     System.out.println("Oh no! We had an issue deleting left over worlds");
                     e.printStackTrace();
                 }
+
+                Initialize(); // Restarts the game.
             }
         }, 200L);
     }
@@ -461,25 +448,6 @@ public class Game {
             }
         }
         return loc;
-    }
-
-    private void fixPlayer(Player p) {
-        p.setHealth(20); // Makes sure they're max health
-        p.setFoodLevel(20); // Makes sure they're max food
-        p.setSaturation(20); // Sets saturation to max
-
-        p.getInventory().clear(); // Clears inventory
-        p.getInventory().setArmorContents(null); // Clears armor
-        p.updateInventory(); // Updates inventory for the player based off our changes
-
-        p.setGameMode(GameMode.SURVIVAL); // Forces them to survival
-        p.setFlying(false); // Disables their fly
-        p.setAllowFlight(false); // Makes it so they're not allowed to fly
-
-        // Removes all potion effects
-        for (PotionEffect potion : p.getActivePotionEffects()) {
-            p.removePotionEffect(potion.getType());
-        }
     }
 
     public boolean isJoinable() {
